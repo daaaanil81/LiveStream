@@ -1,0 +1,4 @@
+# LiveStream
+LiveStream is some servers for watching video from IP cameras. This project is rewritten old project from C on C++.
+This project use WebRTC technology for watching video. Server recieve video from camera and send in browser.
+For work with internet protocols is used ACE (the ADAPTIVE Communication Environment). 
