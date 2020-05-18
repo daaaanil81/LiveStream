@@ -1,2 +1,6 @@
 *~
 ws-server
+.*
+#*
+.#*
+compile_commands.json
