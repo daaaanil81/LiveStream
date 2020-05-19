@@ -4,3 +4,6 @@ ws-server
 #*
 .#*
 compile_commands.json
+Makefile
+emacs_includes.txt
+*.dSYM
