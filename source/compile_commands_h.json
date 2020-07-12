@@ -1,0 +1,22 @@
+[
+    {
+        "command": "c++ -I/usr/local/Cellar/llvm/10.0.0/include/c++/v1 -I/usr/local/Cellar/llvm/10.0.0/lib/clang/10.0.0/include -c  -ggdb -Wall -I/Volumes/ACE_BUILD/ACE_wrappers -I/Users/danilpetrov/librarys/openssl1/include -pthread /Users/danilpetrov/LiveStream/main.cpp", 
+        "directory": "/Users/danilpetrov/LiveStream", 
+        "file": "/Users/danilpetrov/LiveStream/main.cpp"
+    }, 
+    {
+        "command": "c++ -I/usr/local/Cellar/llvm/10.0.0/include/c++/v1 -I/usr/local/Cellar/llvm/10.0.0/lib/clang/10.0.0/include -c  -ggdb -Wall -I/Volumes/ACE_BUILD/ACE_wrappers -I/Users/danilpetrov/librarys/openssl1/include -pthread /Users/danilpetrov/LiveStream/ws-server.cpp", 
+        "directory": "/Users/danilpetrov/LiveStream", 
+        "file": "/Users/danilpetrov/LiveStream/ws-server.cpp"
+    }, 
+    {
+        "command": "c++ -I/usr/local/Cellar/llvm/10.0.0/include/c++/v1 -I/usr/local/Cellar/llvm/10.0.0/lib/clang/10.0.0/include -c  -ggdb -Wall -I/Volumes/ACE_BUILD/ACE_wrappers -I/Users/danilpetrov/librarys/openssl1/include -pthread /Users/danilpetrov/LiveStream/base64.cpp", 
+        "directory": "/Users/danilpetrov/LiveStream", 
+        "file": "/Users/danilpetrov/LiveStream/base64.cpp"
+    }, 
+    {
+        "command": "c++ -I/usr/local/Cellar/llvm/10.0.0/include/c++/v1 -I/usr/local/Cellar/llvm/10.0.0/lib/clang/10.0.0/include -c  -ggdb -Wall -I/Volumes/ACE_BUILD/ACE_wrappers -I/Users/danilpetrov/librarys/openssl1/include -pthread /Users/danilpetrov/LiveStream/Thread_Argv.cpp", 
+        "directory": "/Users/danilpetrov/LiveStream", 
+        "file": "/Users/danilpetrov/LiveStream/Thread_Argv.cpp"
+    }
+]
