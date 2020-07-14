@@ -1,0 +1,83 @@
+body::before {
+    content: '';
+    font-family: sans-serif;
+    position: fixed; /* Фиксируем на одном месте */
+    left: 0; right: 0; /* Вся ширин */
+    top: 0; bottom: 0; /* Вся высота */
+    background: url(../images/background6.jpg)  center / cover no-repeat;
+    z-index: -1; /* Фон ниже текста */
+    filter: blur(5px); /* Размытие */
+}
+
+body {
+    color: #fff; /* Цвет текста */
+    
+}
+
+h1 {
+  font-family: "Geostar Fill";
+  color: cornflowerblue;
+}
+
+p {
+  color: white;
+}
+
+body {
+    background-position: center; /* Center the image */
+    background-repeat: no-repeat; /* Do not repeat the image */
+    background-attachment: fixed;
+}
+
+h1.stream{
+    color: white;
+    font-size: 20pt;
+}
+
+.table_stream {
+    position: fixed;
+    top: 10%;
+    left: 30%;
+    width:600px;
+    height:600px;
+}
+
+.table_stream_mobile {
+    height: 500px;
+    width: 375px;
+}
+
+.table_mobile {
+    display: none;
+    position: fixed;
+    top: 5%;
+    left: 5%;
+    right: 5%;
+}
+
+.table_desktop {
+    display: block;
+}
+
+.videostream_mobile {
+    
+    /* width: 300px; */
+    /* height: 500px; */
+}
+
+@media screen and (max-width:860px) {
+    .table_mobile {
+        display: block;
+        position: fixed;
+        top: 5%;
+        left: 5%;
+        right: 5%;
+        height: 500px;
+    }
+    
+    
+    .table_desktop {
+        display: none;
+    }
+}
+

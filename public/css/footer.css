@@ -1,0 +1,14 @@
+.footer {
+    position: fixed; /* Фиксируем на одном месте */
+    left: 0px; right: 0px; /* Вся ширин */
+    bottom: 0px; /* Вся высота */
+    height: 50px; /* Высота блока */
+    padding: 0 10px;
+    color: black;
+    border-top: 2px solid #ccc;
+    background-color: white;
+}
+.footer p{
+    color: black;   
+    font-size: 0.9em;
+}

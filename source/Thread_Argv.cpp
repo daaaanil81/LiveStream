@@ -4,9 +4,26 @@ Thread_Argv::Thread_Argv(ACE_SSL_SOCK_Stream* ssl_stream, SSL_CTX* ctx) : ssl_st
 {
     ACE_DEBUG((LM_DEBUG, "%s:Construct Thread arguments.\n", LOG_DEBUG));
 }
+
 Thread_Argv::~Thread_Argv()
 {
     ACE_DEBUG((LM_DEBUG, "%s:Destructor Thread arguments.\n", LOG_DEBUG));
+}
+
+bool Thread_Argv::wait(int fd, long seconds)
+{
+    if (fd < 0) {
+        return false;
+    }
+
+    fd_set fdSet;
+    FD_ZERO(&fdSet);
+    FD_SET(fd, &fdSet);
+    
+    timeval tv = { seconds, 0 };
+    int rc = select(fd + 1, &fdSet, NULL, NULL, &tv);
+
+    return (rc != 0);
 }
 
 void* Thread_Argv::thread_connection(void* argv)
@@ -19,9 +36,9 @@ void* Thread_Argv::thread_connection(void* argv)
     {
         ssl_stream->MessageConnection(ctx);
         char message[4096] = {0};
+        Thread_Argv::wait(ssl_stream->get_handle(), 3);
+        ssl_stream->send_n("Con", ACE_OS::strlen("Con"));
         ssl_stream->recv_n(message, sizeof(message));
-        ssl_stream->send_n(message, ACE_OS::strlen(message));
-
         
         // while (thread_ids.at(id))
         // {

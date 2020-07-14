@@ -1,6 +1,8 @@
 #pragma once
 #include <iostream>
 #include <mutex>
+#include <sys/select.h>
+#include <sys/time.h>
 
 #include "ace/SOCK_Stream.h"
 #include "ace/Thread_Manager.h"
@@ -18,5 +20,6 @@ public:
     static void* thread_connection(void* argv);
     ACE_SSL_SOCK_Stream* ssl_stream_;
     SSL_CTX* ctx_;
+    static bool wait(int fd, long seconds);
 };
 
