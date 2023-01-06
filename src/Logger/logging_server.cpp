@@ -10,7 +10,7 @@
 
 int Logging_Server::run(int argc, char *argv[]) {
 
-    if (open(argc > 0 ? std::atoi(argv[1]) : 0) == -1)
+    if (open(argc > 1 ? std::atoi(argv[1]) : 0) == -1)
         return -1;
 
     for (;;) {

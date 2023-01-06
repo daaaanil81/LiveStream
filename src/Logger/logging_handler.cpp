@@ -5,19 +5,18 @@
 #include <ace/Log_Record.h>
 #include <ace/Message_Block.h>
 #include <iostream>
+#include <sstream>
 
 struct Message_Block_Deleter {
-    void operator()(ACE_Message_Block *ptr) {
-        ptr->release();
-        delete ptr;
-    }
+    void operator()(ACE_Message_Block *ptr) { ptr->release(); }
 };
 
-int Logging_Handler::recv_log_record(ACE_Message_Block *&mblk) {
+int Logging_Handler::recv_log_record(std::shared_ptr<ACE_Message_Block> &mblk) {
 
     ACE_INET_Addr peer_addr;
     logging_peer_.get_remote_addr(peer_addr);
-    mblk = new ACE_Message_Block(MAXHOSTNAMELEN + 1);
+    mblk.reset(new ACE_Message_Block(MAXHOSTNAMELEN + 1),
+               Message_Block_Deleter());
     peer_addr.get_host_name(mblk->wr_ptr(), MAXHOSTNAMELEN);
     mblk->wr_ptr(strlen(mblk->wr_ptr()) + 1);
 
@@ -47,14 +46,11 @@ int Logging_Handler::recv_log_record(ACE_Message_Block *&mblk) {
         }
     }
     payload->release();
-    mblk->release();
     return -1;
 }
 
-int Logging_Handler::write_log_record(ACE_Message_Block *mblk) {
-    if (log_file_.send_n(mblk) == -1) {
-        return -1;
-    }
+int Logging_Handler::write_log_record(
+    std::shared_ptr<ACE_Message_Block> &mblk) {
 
     if (ACE::debug()) {
         ACE_InputCDR cdr(mblk->cont());
@@ -71,20 +67,23 @@ int Logging_Handler::write_log_record(ACE_Message_Block *mblk) {
 
         cdr >> log_record;
 
-        log_record.print(mblk->rd_ptr(), 1, std::cerr);
+        std::cerr << log_record.msg_data() << std::endl;
+    }
+
+    if (log_file_.send_n(mblk.get()) == -1) {
+        return -1;
     }
 
     return mblk->total_length();
 }
 
 int Logging_Handler::log_record() {
-    ACE_Message_Block *mblk = nullptr;
+    std::shared_ptr<ACE_Message_Block> mblk;
 
     if (recv_log_record(mblk) == -1) {
         return -1;
     }
 
     int result = write_log_record(mblk);
-    mblk->release();
     return result == -1 ? -1 : 0;
 }

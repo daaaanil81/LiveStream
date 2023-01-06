@@ -1,5 +1,9 @@
+#ifndef __LOGGING_HANDLER__
+#define __LOGGING_HANDLER__
+
 #include <ace/FILE_IO.h>
 #include <ace/SOCK_Stream.h>
+#include <memory>
 
 class ACE_Message_Block;
 
@@ -22,11 +26,13 @@ class Logging_Handler {
 
     int close() { return logging_peer_.close(); }
 
-    int recv_log_record(ACE_Message_Block *&mblk);
+    int recv_log_record(std::shared_ptr<ACE_Message_Block> &mblk);
 
-    int write_log_record(ACE_Message_Block *mblk);
+    int write_log_record(std::shared_ptr<ACE_Message_Block> &mblk);
 
     int log_record();
 
     ACE_SOCK_Stream &peer() { return logging_peer_; }
 };
+
+#endif /* __LOGGING_HANDLER__ */

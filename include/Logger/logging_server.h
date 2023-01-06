@@ -1,3 +1,6 @@
+#ifndef __LOGGING_SERVER__
+#define __LOGGING_SERVER__
+
 #include <ace/FILE_IO.h>
 #include <ace/SOCK_Acceptor.h>
 
@@ -22,3 +25,5 @@ class Logging_Server {
   private:
     ACE_SOCK_Acceptor acceptor_;
 };
+
+#endif /* __LOGGING_SERVER__ */
