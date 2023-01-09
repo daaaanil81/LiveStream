@@ -3,7 +3,7 @@ project("webrtcdaemon")
 
 if (${SANITIZE})
     message(STATUS "Sanitizer ON")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fsanitize=undefined -fstack-protector-all -fno-omit-frame-pointer -static-libubsan -static-libasan -g")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fsanitize=undefined -fstack-protector-all -fno-omit-frame-pointer -g")
 else ()
     message(STATUS "Sanitizer OFF")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -pthread")
@@ -15,13 +15,32 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 # DEPENDENCIES
 
-find_library(ACE_LIB ACE "/usr/local/lib")
-if(NOT ACE_LIB)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(MACOSX TRUE)
+    message(STATUS "Build for MACOS")
+endif()
+
+if (${MACOSX})
+    set(CMAKE_LIBRARY_PATH "/Volumes/ACE_BUILD/ACE_wrappers/ace")
+    link_directories("/Volumes/ACE_BUILD/ACE_wrappers/ace")
+else ()
+    set(CMAKE_LIBRARY_PATH "/usr/local/lib")
+    link_directories("/usr/local/lib")
+endif()
+
+find_library(ACE_LIB ACE)
+if (NOT ACE_LIB)
     message(FATAL_ERROR "ACE library not found")
 endif()
 
 project("webrtcdaemon")
 set(CMAKE_CXX_STANDARD 17)
+
+if (${MACOSX})
+    include_directories("/Volumes/ACE_BUILD/ACE_wrappers")
+else()
+    include_directories("/usr/local/include")
+endif()
 
 # DAEMON
 
