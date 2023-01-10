@@ -11,13 +11,7 @@ int Reactive_Logging_Server::wait_for_multiple_events() {
 
     active_handles_ = master_handle_set_;
     int width = (int)active_handles_.max_set() + 1;
-    if (select(width, active_handles_.fdset(), 0, 0, 0) == -1) {
-        return -1;
-    }
-
-    active_handles_.sync((ACE_HANDLE)active_handles_.max_set() + 1);
-
-    return 0;
+    return ACE::select(width, active_handles_);
 }
 
 int Reactive_Logging_Server::handle_connections() {
