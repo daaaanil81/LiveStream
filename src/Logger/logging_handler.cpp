@@ -52,22 +52,23 @@ int Logging_Handler::recv_log_record(std::shared_ptr<ACE_Message_Block> &mblk) {
 int Logging_Handler::write_log_record(
     std::shared_ptr<ACE_Message_Block> &mblk) {
 
+    ACE_InputCDR cdr(mblk->cont());
+
+    ACE_CDR::Boolean byte_order;
+    ACE_CDR::ULong length;
+
+    cdr >> ACE_InputCDR::to_boolean(byte_order);
+    cdr.reset_byte_order(byte_order);
+
+    cdr >> length;
+
+    ACE_Log_Record log_record;
+
+    cdr >> log_record;
+
     if (ACE::debug()) {
-        ACE_InputCDR cdr(mblk->cont());
-
-        ACE_CDR::Boolean byte_order;
-        ACE_CDR::ULong length;
-
-        cdr >> ACE_InputCDR::to_boolean(byte_order);
-        cdr.reset_byte_order(byte_order);
-
-        cdr >> length;
-
-        ACE_Log_Record log_record;
-
-        cdr >> log_record;
-
-        std::cerr << log_record.msg_data() << std::endl;
+        std::cerr << mblk->rd_ptr() << ":" << log_record.msg_data()
+                  << std::endl;
     }
 
     if (log_file_.send_n(mblk.get()) == -1) {
