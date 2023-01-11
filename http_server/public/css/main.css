@@ -1,0 +1,224 @@
+body::before {
+    content: '';
+    font-family: sans-serif;
+    position: fixed; /* Фиксируем на одном месте */
+    left: 0; right: 0; /* Вся ширин */
+    top: 0; bottom: 0; /* Вся высота */
+    background: url(../images/background6.jpg)  center / cover no-repeat;
+    z-index: -1; /* Фон ниже текста */
+    filter: blur(5px); /* Размытие */
+}
+
+body {
+    color: #fff; /* Цвет текста */
+    
+}
+
+h1 {
+  font-family: "Geostar Fill";
+  color: cornflowerblue;
+}
+
+p {
+  color: white;
+}
+
+body {
+    background-position: center; /* Center the image */
+    background-repeat: no-repeat; /* Do not repeat the image */
+    background-attachment: fixed;
+}
+
+h1.stream{
+    color: white;
+    font-size: 20pt;
+}
+
+
+.logo {
+    /* line-height: 20px; */
+    position: absolute; /* Фиксируем на одном месте */
+    left: 90px;
+    top: 0
+    text-transform: uppercase;
+    color: #fff;
+    font-family: "Geostar Fill";
+}
+
+.logo_img {
+    width: 70px;
+    height: 70px;
+    position: fixed; /* Фиксируем на одном месте */
+    left: 10px;
+    top: 0;
+}
+
+.logo_img_mobile {
+    Width: 60px;
+    height: 60px;
+    position: fixed; /* Фиксируем на одном месте */
+    left: 5px;
+    top: 0;
+    
+}
+
+.menu_img_mobile {
+    width: 40px;
+    height: 40px;
+    position: fixed; /* Фиксируем на одном месте */
+    right: 10px;
+    top: 10px;
+    display: inline-block;
+}
+
+.header {
+    height: 75px;
+    background: rgba(70,130,180,.9);
+    padding: 0 15px;
+    color: #fff;
+    position: absolute; /* Фиксируем на одном месте */
+    left: 0; right: 0; /* Вся ширин */
+    top: 0; bottom: 0; /* Вся высота */
+    font-size: 21pt; /* Размер шрифта в пунктах */ 
+}
+
+.header h2 {
+    /* line-height: 25px; */
+    position: absolute; /* Фиксируем на одном месте */
+    left: 90px;
+    top: 0;
+    font-size: 21pt; /* Размер шрифта в пунктах */ 
+}
+
+.header_mobile {
+    display: block;
+    height: 60px;
+    background: rgba(70,130,180,.9);
+    padding: 0 15px;
+    color: #fff;
+    display: none;
+    position: absolute; /* Фиксируем на одном месте */
+    left: 0; right: 0; /* Вся ширин */
+    top: 0; bottom: 0; /* Вся высота */
+    font-size: 10pt; /* Размер шрифта в пунктах */ 
+}
+
+.header_mobile h2 {
+    position: absolute; /* Фиксируем на одном месте */
+    left: 65px;
+    top: 0;
+    font-size: 15pt; /* Размер шрифта в пунктах */ 
+}
+
+.menu {
+    font-family: 'Geostar Fill';
+    font-size: 16pt; /* Размер шрифта в пунктах */
+    list-style-type: none;
+    display: block;
+    overflow: hidden;
+}
+
+.menu ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.menu li {
+    float: right;
+}
+
+.menu a {
+    color: #fff;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 0 10px;
+    transition: 0.4s;
+    font-family: 'Geostar Fill';
+}
+
+.menu a:hover{
+    color: #3498db;
+}
+
+
+.about {
+    font-family: 'Geostar Fill';
+    color: #fff;
+    position: absolute; /* Фиксируем на одном месте */
+    left: 10%;
+    top: 10%;
+    
+}
+
+.about h1 {
+    text-transform: uppercase;
+    color: #fff;
+    font-family: 'Geostar Fill';
+    font-size: 30px;
+}
+
+.column {
+    overflow: auto;
+    -Webkit-column-width: 100px;
+    -moz-column-width: 150px;
+    column-width: 150px;
+    -webkit-column-count: 3;
+    -moz-column-count: 3;
+    column-count: 2;
+    -webkit-column-gap: 30px;
+    -moz-column-gap: 30px;
+    column-gap: 30px;
+    -webkit-column-rule: 1px solid #ccc;
+    -moz-column-rule: 1px solid #ccc;
+    column-rule: 0px solid #fff;
+    text-align: justify;
+    font-size: 18px;
+    position: absolute;
+    top: 20%;
+    left: 5%;
+    right: 5%;
+}
+
+.column_mobile {
+    display: none;
+    position: fixed;
+    top: 15%;
+    left: 5%;
+    right: 5%;
+    text-align: justify;
+}
+
+.table_stream {
+    position: fixed;
+    top: 10%;
+    left: 30%;
+    width:600px;
+    height:600px;
+}
+
+@media screen and (max-width:860px) {
+
+    .header_mobile {
+        display: block;
+    }
+    
+    .header {
+        display: none;
+    }
+    
+    .about {
+        left: 20%;
+        top: 8%;
+    }
+    
+    .column {
+        display: none;
+    }
+
+    .column_mobile {
+        display: block;
+    }
+}
+

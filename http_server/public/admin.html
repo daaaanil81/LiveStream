@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title> Admin </title>
+    <meta charset="UTF-8">
+    <link rel="shortcut icon" href="images/logo1.png" type="image/png">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/footer.css">
+    <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Geostar+Fill" />
+    <link href="https://fonts.googleapis.com/css?family=Lobster&subset=latin,cyrillic" rel="stylesheet" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css">
+    <link rel="stylesheet" href="css/admin.css">
+  </head>
+
+  
+  <body>
+    <!-- Menu for Desktop -->
+    <div class="header">
+      <ul class="menu">
+        <li><a href="/about">About</a></li>
+        <li><a href="#">Services</a></li>
+        <li><a href="#">Contact</a></li>
+        <li><a class="logo" href="/"> LIVE STREAM </a></li>
+        <li><img src="images/logo1.png" class="logo_img"></li>
+      </ul>
+    </div>
+
+    <!-- Menu for mobile -->
+    <div class="header_mobile">
+      <ul class="menu">
+        <li><img src="images/logo1.png" class="logo_img_mobile"></Li>
+        <li><h2 class="logo"> LIVE STREAM </h2></li>
+        <li class="dropdown">
+          <img src="images/open-menu.png" onclick="javascript:void(0)" class="menu_img_mobile">
+          <div class="dropdown-content">
+            <a href="#">Services</a>
+            <a href="#">Contact</a>
+            <a href="/about">About</a>
+          </div>
+        </li>
+      </ul>
+    </div>
+    
+    <!-- Table for Desktop -->
+    <table class="table_class">
+      <tr>
+        <th> <h1 class="h1_class" align="left"> Add new camera</h1> </th>
+        <th> <h1 class="h1_class"> All your cameras</h1> </th>
+      </tr>
+      <tr>
+        <td align="center"  class="div_form">
+          <p> Enter please information about camera. </p>
+          <p id="url"> rtsp:///axis-media/media.amp </p>
+          <p> IP: <input id="ip_addres" type="text" oninput="createUrl()"> </p>
+          <a class="a_button" onclick="clickedAdd()"> New camera </a>
+        </td>
+        <td id="td_add_camera">
+          
+        </td>
+      </tr>
+    </table>
+    
+    <!-- Table for mobile -->
+    <table class="table_class_mobile">
+      <tr>
+        <th align="center"><h1 class="h1_class"> Add new camera</h1></th>
+      </tr>
+      <tr>
+        <td align="center" class="div_form">
+          <p> Enter please information about camera. </p>
+          <p id="url_mobile"> rtsp:///axis-media/media.amp </p>
+          <p> IP: <input id="ip_addres_mobile" type="text" oninput="createUrl()"> </p>
+          <a class="a_button" onclick="clickedAdd_mobile()"> New camera </a>
+        </td>
+      </tr>
+      <tr>
+        <th> <h1 class="h1_class"> All your cameras</h1> </th>
+      </tr>
+      <tr>
+        <td></td>
+      </tr>
+    </table>
+    <footer class="footer">
+      <p > © 2020 Даниил Петров, по всем вопросам пишите по адресу daaaanil81@gmail.com </p>
+    </footer>
+    <script type="text/javascript" src="/js/clicked.js"></script>
+  </body>
+</html>

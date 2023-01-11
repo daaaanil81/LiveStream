@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title> Stream </title>
+    <meta charset="UTF-8">
+    <link rel="shortcut icon" href="images/logo1.png" type="image/png">
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/footer.css">
+    <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Geostar+Fill" />
+    <link href="https://fonts.googleapis.com/css?family=Lobster&subset=latin,cyrillic" rel="stylesheet" type="text/css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.1/css/all.css">
+  </head>
+  <body>
+
+    <div class="header">
+      <ul class="menu">
+        <li><a href="/about">About</a></li>
+        <li><a href="#">Services</a></li>
+        <li><a href="#">Contact</a></li>
+        <li><a class="logo" href="/"> LIVE STREAM </a></li>
+        <li><img src="images/logo1.png" class="logo_img" alt="No image"></li>
+      </ul>
+    </div>
+
+    <table border="1" class="table_stream">
+      <tr width="600px" height="50px">
+        <td><h1 class="stream" align="center" id="IdText"></h1></td>
+      </tr>
+      <tr>
+        <th>
+          <video width="600px" height="500px" id="remoteVideo" autoplay></video>
+        </th>
+      </tr>
+      <tr width="600px" height="50px">
+        <td><h1 class="stream" align="center" id="status"></h1></td>
+      </tr>
+    </table>
+    <script type="text/javascript" src="/js/ws_client.js"></script>
+    <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+
+  </body>
+</html>

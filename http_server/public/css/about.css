@@ -1,0 +1,71 @@
+
+body::before {
+    content: '';
+    font-family: sans-serif;
+    position: fixed; /* Фиксируем на одном месте */
+    left: 0; right: 0; /* Вся ширин */
+    top: 0; bottom: 0; /* Вся высота */
+    background: url(../images/background4.jpg)  center / cover no-repeat;
+    z-index: -1; /* Фон ниже текста */
+    filter: blur(5px); /* Размытие */
+}
+body {
+    color: #fff; /* Цвет текста */
+}
+
+.logo {
+    line-height: 20px;
+    float: left;
+    text-transform: uppercase;
+    color: #fff;
+    font-family: "Geostar Fill";
+}
+.header {
+    height: 75px;
+    background: rgba(70,130,180,.9);
+    padding: 0 15px;
+    color: #fff;
+    position: fixed; /* Фиксируем на одном месте */
+    left: 0; right: 0; /* Вся ширин */
+    top: 0; bottom: 0; /* Вся высота */
+    font-size: 21pt; /* Размер шрифта в пунктах */ 
+}
+.header h2{
+    line-height: 25px;
+    position: fixed; /* Фиксируем на одном месте */
+    left: 90px;
+    top: 0;
+    font-size: 21pt; /* Размер шрифта в пунктах */ 
+}
+.about {
+    font-family: 'Geostar Fill';
+    color: #fff;
+    position: fixed; /* Фиксируем на одном месте */
+    left: 30px; right: 700px; /* Вся ширин */
+    top: 80px; bottom: 100px; /* Вся высота */
+    
+}
+.about h1 {
+    text-transform: uppercase;
+    color: #fff;
+    font-family: 'Geostar Fill';
+    font-size: 30px;
+}
+.column {
+    overflow: auto;
+    -webkit-column-width: 100px;
+    -moz-column-width: 150px;
+    column-width: 100px;
+    -webkit-column-count: 1;
+    -moz-column-count: 1;
+    column-count: 1;
+    -webkit-column-gap: 30px;
+    -moz-column-gap: 30px;
+    column-gap: 30px;
+    -webkit-column-rule: 1px solid #ccc;
+    -moz-column-rule: 1px solid #ccc;
+    column-rule: 0px solid #fff;
+    text-align: justify;
+    font-size: 18px;
+
+}
