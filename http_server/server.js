@@ -28,20 +28,27 @@ let db =
         console.log('Connected to the login database.');
     });
 
-// let sql = `SELECT Username ,
-//            FROM playlists
-//            WHERE PlaylistId  = ?`;
+let sql = `SELECT Username, Password
+           FROM users
+           WHERE Username = ?`;
 
 app.use(express.static('public'));
 
 app.post('/', (req, res) => {
-    var user_name = req.body.login;
+    var username = req.body.login;
     var password = req.body.pass;
-    console.log("User name = " + user_name + ", password is " + password);
-    if (user_name == 'root' && password == 'pass')
-        res.sendFile(__dirname + '/public/stream.html');
-    else
-        res.sendFile(__dirname + '/public/index.html');
+    db.get(sql, [ username ], (err, row) => {
+        if (row) {
+            var hash = md5(password + "9999");
+            if (username == row.Username && hash == row.Password) {
+                res.sendFile(__dirname + '/public/stream.html');
+            } else {
+                res.sendFile(__dirname + '/public/index.html');
+            }
+        } else {
+            res.sendFile(__dirname + '/public/index.html');
+        }
+    });
 });
 
 const httpsServer = https.createServer(options, app);
