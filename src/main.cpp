@@ -14,6 +14,7 @@ extern "C" {
 
 #include <rtc/rtc.hpp>
 
+#include "ffmpeg_input.hpp"
 #include "socket/socket.h"
 #include "socket/ws_socket.h"
 
@@ -23,7 +24,36 @@ void signalHandler(int signal) { running = false; }
 
 int main(int argc, char *argv[]) {
 
-    std::cout << "Ok" << std::endl;
+    signal(SIGINT, signalHandler);
+
+    std::string pathStr;
+    std::string type;
+
+    if (argc > 2) {
+        pathStr = argv[1];
+        type = argv[2];
+    } else {
+        std::cout << "Usage: " << argv[0] << " <path_to_file> <type -f/-d>"
+                  << std::endl;
+
+        return ERROR;
+    }
+
+    std::shared_ptr<FFmpegInput> ffmpegInput;
+
+    if (type == "-f") {
+        ffmpegInput.reset(new FFmpegInputFile(pathStr.c_str()));
+    } else if (type == "-d") {
+        ffmpegInput.reset(new FFmpegInputWebCamera(pathStr.c_str()));
+    } else {
+        std::cout << "Usage: " << argv[0] << " <path_to_file> <type -f/-d>"
+                  << std::endl;
+
+        return ERROR;
+    }
+
+    std::shared_ptr<AVPacket> received_packet = nullptr;
+
     signal(SIGINT, signalHandler);
 
     try {
@@ -39,15 +69,18 @@ int main(int argc, char *argv[]) {
 
         while (running.load()) {
             if (ws.sizeTracks() > 0) {
-                std::cout << "RECV" << std::endl;
-                int len;
-                auto buffer = socket.recvBuffer(len);
-                ws.send(buffer, len);
+                /* std::cout << "RECV" << std::endl; */
+                /* int len; */
+                /* auto buffer = socket.recvBuffer(len); */
+                /* ws.send(buffer, len); */
+                received_packet = ffmpegInput->get();
             }
         }
 
     } catch (const std::exception &e) {
         std::cerr << "Error: " << e.what() << std::endl;
     }
+
+    ffmpegInput->stop_stream(false);
     return 0;
 }
