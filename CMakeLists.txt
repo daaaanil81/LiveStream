@@ -26,6 +26,11 @@ if (NOT AVCODEC_LIB)
     message(FATAL_ERROR "avcodec library not found")
 endif()
 
+find_library(AVDEVICE_LIB avdevice)
+if (NOT AVDEVICE_LIB)
+    message(FATAL_ERROR "avdevice library not found")
+endif()
+
 find_library(AVFORMAT_LIB avformat)
 if (NOT AVFORMAT_LIB)
     message(FATAL_ERROR "avformat library not found")
@@ -71,6 +76,7 @@ target_link_libraries(daemon
     -lavformat
     -lavutil
     -lswscale
+    -lavdevice
     -ldatachannel
     ${OpenCV_LIBS}
     )
