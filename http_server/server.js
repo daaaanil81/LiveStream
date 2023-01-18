@@ -35,20 +35,21 @@ let sql = `SELECT Username, Password
 app.use(express.static('public'));
 
 app.post('/', (req, res) => {
-    var username = req.body.login;
-    var password = req.body.pass;
-    db.get(sql, [ username ], (err, row) => {
-        if (row) {
-            var hash = md5(password + "9999");
-            if (username == row.Username && hash == row.Password) {
-                res.sendFile(__dirname + '/public/stream.html');
-            } else {
-                res.sendFile(__dirname + '/public/index.html');
-            }
-        } else {
-            res.sendFile(__dirname + '/public/index.html');
-        }
-    });
+    // var username = req.body.login;
+    // var password = req.body.pass;
+    // db.get(sql, [ username ], (err, row) => {
+    //     if (row) {
+    //         var hash = md5(password + "9999");
+    //         if (username == row.Username && hash == row.Password) {
+    //             res.sendFile(__dirname + '/public/stream.html');
+    //         } else {
+    //             res.sendFile(__dirname + '/public/index.html');
+    //         }
+    //     } else {
+    //         res.sendFile(__dirname + '/public/index.html');
+    //     }
+    // });
+    res.sendFile(__dirname + '/public/stream.html');
 });
 
 const httpsServer = https.createServer(options, app);

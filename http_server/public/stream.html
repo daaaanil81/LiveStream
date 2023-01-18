@@ -21,10 +21,11 @@
           <video width="600px" height="500px" id="remoteVideo" autoplay></video>
         </th>
       </tr>
-      <tr width="600px" height="50px">
-        <td><h1 class="stream" align="center" id="status"></h1></td>
-      </tr>
     </table>
+    <h2>State</h2>
+    <p>ICE Connection state: <span id="ice-connection-state"></span></p>
+    <p>ICE Gathering state: <span id="ice-gathering-state"></span></p>
+    <p>Current state: <span id="status-log"></span></p>
     <script type="text/javascript" src="/js/ws_client.js"></script>
     <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
 
