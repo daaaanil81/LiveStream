@@ -21,7 +21,6 @@ sudo apt-get install -y cmake gcc g++ python3 python3-dev python3-numpy libavcod
                         libgstreamer1.0-dev libgtk-3-dev libpng-dev libjpeg-dev \
                         libopenexr-dev libtiff-dev libwebp-dev
 ```
-
 1. `git clone https://github.com/opencv/opencv.git`
 2. `git clone https://github.com/opencv/opencv_contrib.git`
 3. Check Nvidia video device: `nvidia-smi -L`
@@ -49,13 +48,18 @@ cmake -D CMAKE_BUILD_TYPE=RELEASE \
 --
 --   cuDNN:                         YES (ver 8.3.2)
 ```
-
 8. `make -j12 && sudo make install && sudo ldconfig`
 
 ### Build and Install Ffmpeg
 
 [Ffmpeg Instruction](https://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu)
 
+### Build and Install libdatachannel
+
+1. `git clone https://github.com/paullouisageneau/libdatachannel.git`
+2. `cd libdatachannel`
+3. `git submodule update --init --recursive --depth 1`
+4. `mkdir build && cd build && cmake .. && make -12 && sudo make install`
 
 ## Start application
 

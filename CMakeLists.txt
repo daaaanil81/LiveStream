@@ -42,9 +42,11 @@ if (NOT SWSCALE_LIB)
 endif()
 
 find_package(OpenCV 4.6.0 REQUIRED)
+find_package(LibDataChannel REQUIRED)
 
 include_directories(
     ${OpenCV_INCLUDE_DIRS}
+    ${LibDataChannel_INCLUDE_DIRS}
 )
 
 # DAEMON
@@ -69,5 +71,6 @@ target_link_libraries(daemon
     -lavformat
     -lavutil
     -lswscale
+    -ldatachannel
     ${OpenCV_LIBS}
     )
