@@ -1,3 +1,6 @@
+#ifndef __DELETERS__
+#define __DELETERS__
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -10,18 +13,8 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-#include <atomic>
-#include <iostream>
-#include <list>
-#include <memory>
-#include <mutex>
-#include <string>
-#include <thread>
 
-enum Code {
-    SUCCESS = 0,
-    ERROR = -1,
-};
+#include <iostream>
 
 struct AVFormatContext_Deleter {
     void operator()(AVFormatContext *ptr) {
@@ -51,33 +44,20 @@ struct AVPacket_Deleter {
     }
 };
 
-class FFmpegInput {
-  protected:
-    std::shared_ptr<AVFormatContext> spAVFormatContext_;
-    std::shared_ptr<AVCodecContext> spCodecContext_;
-    std::list<std::shared_ptr<AVPacket>> packet_list_;
-    std::thread thread_;
-    std::atomic<bool> active_;
-    std::mutex mutex_;
-    int video_stream_index_;
-
-  public:
-    virtual std::shared_ptr<AVPacket> get() = 0;
-    bool stream_status();
-    void read_video_stream();
-    void stop_stream(bool new_actions);
+struct timebase_t {
+    int numerator;
+    int denominator;
 };
 
-class FFmpegInputFile : public FFmpegInput {
-  public:
-    std::shared_ptr<AVPacket> get() override;
-    FFmpegInputFile(const char *path_to_file);
-    ~FFmpegInputFile();
+struct stream_desc_t {
+    int64_t bit_rate;
+    int width;
+    int height;
+    int channels;
+    int sample_rate;
+    timebase_t timebase;
+    // media_type_t media_type;
+    std::string codec_name;
 };
 
-class FFmpegInputWebCamera : public FFmpegInput {
-  public:
-    std::shared_ptr<AVPacket> get() override;
-    FFmpegInputWebCamera(const char *device_name);
-    ~FFmpegInputWebCamera();
-};
+#endif

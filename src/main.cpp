@@ -14,7 +14,7 @@ extern "C" {
 
 #include <rtc/rtc.hpp>
 
-#include "ffmpeg_input.hpp"
+#include "ffmpeg/ffmpeg_input.hpp"
 #include "socket/socket.h"
 #include "socket/ws_socket.h"
 
@@ -36,7 +36,7 @@ int main(int argc, char *argv[]) {
         std::cout << "Usage: " << argv[0] << " <path_to_file> <type -f/-d>"
                   << std::endl;
 
-        return ERROR;
+        return -1;
     }
 
     std::shared_ptr<FFmpegInput> ffmpegInput;
@@ -49,7 +49,7 @@ int main(int argc, char *argv[]) {
         std::cout << "Usage: " << argv[0] << " <path_to_file> <type -f/-d>"
                   << std::endl;
 
-        return ERROR;
+        return -1;
     }
 
     std::shared_ptr<AVPacket> received_packet = nullptr;
@@ -81,6 +81,6 @@ int main(int argc, char *argv[]) {
         std::cerr << "Error: " << e.what() << std::endl;
     }
 
-    ffmpegInput->stop_stream(false);
+    ffmpegInput->stop_stream();
     return 0;
 }

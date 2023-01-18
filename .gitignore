@@ -110,7 +110,7 @@ dist
 .temp
 .cache
 .vscode
-
+.idea
 # Docusaurus cache and generated files
 .docusaurus
 
