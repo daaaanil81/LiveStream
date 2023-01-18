@@ -2,6 +2,7 @@
 tags
 build/
 build/*
+.syntastic_cpp_config
 
 # Logs
 logs
