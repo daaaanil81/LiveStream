@@ -1,7 +1,14 @@
-#include "ffmpeg/ffmpeg_input.hpp"
 #include <exception>
 
-bool FFmpegInput::stream_status() const { return active_; };
+#include "ffmpeg/ffmpeg_input.hpp"
+
+bool FFmpegInput::stream_status() const {
+    if (!active_ && (packet_list_.size() == 0)) {
+        return false;
+    } else {
+        return true;
+    }
+};
 
 void FFmpegInput::stop_stream() { active_ = false; };
 
@@ -12,27 +19,25 @@ FFmpegInputWebCamera::~FFmpegInputWebCamera() { thread_.join(); };
 void FFmpegInput::read_video_stream() {
 
     while (active_) {
-        AVPacket *pPacket = nullptr;
         std::shared_ptr<AVPacket> spPacket =
-            std::shared_ptr<AVPacket>(pPacket, AVPacket_Deleter());
-        pPacket = av_packet_alloc();
-        if (pPacket == nullptr) {
+            std::shared_ptr<AVPacket>(av_packet_alloc(), AVPacket_Deleter());
+        if (!spPacket) {
             throw std::logic_error("Failed to allocate memory for packet");
         }
-        int res = av_read_frame(spAVFormatContext_.get(), pPacket);
+        int res = av_read_frame(spAVFormatContext_.get(), spPacket.get());
         if (res >= 0) {
-            if (pPacket->stream_index == video_stream_index_) {
+            if (spPacket->stream_index == video_stream_index_) {
+                // std::cout << pPacket->pos << std::endl;
                 std::lock_guard<std::mutex> lock(mutex_);
-                spPacket.reset(pPacket);
                 packet_list_.push_back(spPacket);
                 std::cout << "Pushing packet, list size: "
                           << packet_list_.size() << std::endl;
 
             } else {
-                av_packet_unref(pPacket);
+                av_packet_unref(spPacket.get());
             }
         } else {
-            // active_ = false;
+            active_ = false;
             break;
         }
     }
@@ -43,16 +48,14 @@ FFmpegInputFile::FFmpegInputFile(const char *path_to_file) {
     spAVFormatContext_ = std::shared_ptr<AVFormatContext>(
         avformat_alloc_context(), AVFormatContext_Deleter());
 
-    if (spAVFormatContext_.get() == nullptr) {
+    if (!spAVFormatContext_) {
         std::cerr << "Failed with allocate memory for context" << std::endl;
     }
 
     const AVCodec *pCodec = nullptr;
     AVCodecParameters *pCodecParameters = nullptr;
 
-    packet_list_ = std::list<std::shared_ptr<AVPacket>>{};
-
-    int res;
+    int res = -1;
     video_stream_index_ = -1;
     AVFormatContext *pAVFormatContext_ = spAVFormatContext_.get();
 
@@ -63,7 +66,6 @@ FFmpegInputFile::FFmpegInputFile(const char *path_to_file) {
     }
 
     res = avformat_find_stream_info(spAVFormatContext_.get(), nullptr);
-
     if (res != 0) {
         throw std::logic_error("Failed with find stream in file");
     }
@@ -114,8 +116,7 @@ FFmpegInputFile::FFmpegInputFile(const char *path_to_file) {
 
     spCodecContext_ = std::shared_ptr<AVCodecContext>(
         avcodec_alloc_context3(pCodec), AVCodecContext_Deleter());
-
-    if (!spCodecContext_.get()) {
+    if (!spCodecContext_) {
         throw std::logic_error("Failed to allocated memory for AVCodecContext");
     }
 
@@ -143,16 +144,14 @@ FFmpegInputWebCamera::FFmpegInputWebCamera(const char *device_name) {
     spAVFormatContext_ = std::shared_ptr<AVFormatContext>(
         avformat_alloc_context(), AVFormatContext_Deleter());
 
-    if (spAVFormatContext_.get() == nullptr) {
+    if (!spAVFormatContext_) {
         std::cerr << "Failed with allocate memory for context" << std::endl;
     }
 
     const AVCodec *pCodec = nullptr;
     AVCodecParameters *pCodecParameters = nullptr;
 
-    packet_list_ = std::list<std::shared_ptr<AVPacket>>{};
-
-    int res;
+    int res = -1;
     video_stream_index_ = -1;
     AVFormatContext *pAVFormatContext_ = spAVFormatContext_.get();
 
@@ -166,7 +165,6 @@ FFmpegInputWebCamera::FFmpegInputWebCamera(const char *device_name) {
     }
 
     res = avformat_find_stream_info(spAVFormatContext_.get(), nullptr);
-
     if (res != 0) {
         throw std::logic_error("Failed with find stream in file");
     }
@@ -185,7 +183,6 @@ FFmpegInputWebCamera::FFmpegInputWebCamera(const char *device_name) {
 
         const AVCodec *pLocalCodec =
             avcodec_find_decoder(pLocalCodecParameters->codec_id);
-
         if (pLocalCodec == nullptr) {
             std::cerr << "Unsupported codec" << std::endl;
             continue;
@@ -217,8 +214,7 @@ FFmpegInputWebCamera::FFmpegInputWebCamera(const char *device_name) {
 
     spCodecContext_ = std::shared_ptr<AVCodecContext>(
         avcodec_alloc_context3(pCodec), AVCodecContext_Deleter());
-
-    if (!spCodecContext_.get()) {
+    if (!spCodecContext_) {
         throw std::logic_error("Failed to allocated memory for AVCodecContext");
     }
 
@@ -239,7 +235,7 @@ FFmpegInputWebCamera::FFmpegInputWebCamera(const char *device_name) {
     thread_ = std::thread(&FFmpegInputFile::read_video_stream, this);
 };
 
-std::shared_ptr<AVPacket> FFmpegInputFile::get() {
+std::shared_ptr<AVPacket> FFmpegInput::get() {
 
     std::shared_ptr<AVPacket> result_packet = nullptr;
     std::lock_guard<std::mutex> lock(mutex_);
@@ -253,31 +249,12 @@ std::shared_ptr<AVPacket> FFmpegInputFile::get() {
     return result_packet;
 }
 
-std::shared_ptr<AVPacket> FFmpegInputWebCamera::get() {
-
-    std::shared_ptr<AVPacket> result_packet = nullptr;
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (packet_list_.size() != 0) {
-        std::cout << "Before receiving packet: " << packet_list_.size();
-        result_packet = packet_list_.front();
-        packet_list_.pop_front();
-        std::cout << " After: " << packet_list_.size() << std::endl;
-    }
-
-    return result_packet;
-};
-
-std::shared_ptr<stream_desc_t> FFmpegInput::get_video_desc() const {
-    return get_stream_desc_(video_stream_index_);
-}
-
-std::shared_ptr<stream_desc_t>
-FFmpegInput::get_stream_desc_(int __index) const {
+std::shared_ptr<stream_desc_t> FFmpegInput::get_stream_desc() const {
 
     auto desc = std::make_shared<stream_desc_t>();
     memset(desc.get(), 0, sizeof(stream_desc_t));
 
-    const auto &stream = spAVFormatContext_->streams[__index];
+    const auto &stream = spAVFormatContext_->streams[video_stream_index_];
     desc->bit_rate = stream->codecpar->bit_rate;
 
     desc->width = stream->codecpar->width;

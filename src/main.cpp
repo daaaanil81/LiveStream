@@ -1,20 +1,13 @@
 #include <csignal>
 #include <iostream>
 
-extern "C" {
-#include <libavcodec/avcodec.h>
-#include <libavformat/avformat.h>
-#include <libavutil/avutil.h>
-#include <libavutil/imgutils.h>
-#include <libswscale/swscale.h>
-}
-
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgcodecs.hpp>
 
 #include <rtc/rtc.hpp>
 
 #include "ffmpeg/ffmpeg_input.hpp"
+#include "ffmpeg/ffmpeg_output.hpp"
 #include "socket/socket.h"
 #include "socket/ws_socket.h"
 
@@ -23,8 +16,9 @@ std::atomic<bool> running = true;
 void signalHandler(int signal) { running = false; }
 
 int main(int argc, char *argv[]) {
-
     signal(SIGINT, signalHandler);
+
+    avformat_network_init();
 
     std::string pathStr;
     std::string type;
@@ -40,6 +34,9 @@ int main(int argc, char *argv[]) {
     }
 
     std::shared_ptr<FFmpegInput> ffmpegInput;
+    FFmpegOutput output("rtp://localhost:5004", ffmpegInput->get_stream_desc());
+
+    std::shared_ptr<AVPacket> received_packet;
 
     if (type == "-f") {
         ffmpegInput.reset(new FFmpegInputFile(pathStr.c_str()));
@@ -51,10 +48,6 @@ int main(int argc, char *argv[]) {
 
         return -1;
     }
-
-    std::shared_ptr<AVPacket> received_packet = nullptr;
-
-    signal(SIGINT, signalHandler);
 
     try {
         rtc::InitLogger(rtc::LogLevel::Debug);
@@ -74,6 +67,9 @@ int main(int argc, char *argv[]) {
                 /* auto buffer = socket.recvBuffer(len); */
                 /* ws.send(buffer, len); */
                 received_packet = ffmpegInput->get();
+                if (received_packet) {
+                    output.send(received_packet);
+                }
             }
         }
 

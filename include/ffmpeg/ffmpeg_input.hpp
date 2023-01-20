@@ -1,10 +1,14 @@
-#include "ffmpeg/deleters.hpp"
+#ifndef __FFMPEG_INPUT_H__
+#define __FFMPEG_INPUT_H__
+
 #include <atomic>
 #include <list>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <thread>
+
+#include "ffmpeg/deleters.hpp"
 
 class FFmpegInput {
   protected:
@@ -16,26 +20,24 @@ class FFmpegInput {
     std::mutex mutex_;
     int video_stream_index_;
 
-    std::shared_ptr<stream_desc_t> get_stream_desc_(int __index) const;
-
   public:
-    virtual std::shared_ptr<AVPacket> get() = 0;
+    std::shared_ptr<AVPacket> get();
     bool stream_status() const;
     void read_video_stream();
     void stop_stream();
-    std::shared_ptr<stream_desc_t> get_video_desc() const;
+    std::shared_ptr<stream_desc_t> get_stream_desc() const;
 };
 
 class FFmpegInputFile : public FFmpegInput {
   public:
-    std::shared_ptr<AVPacket> get() override;
     FFmpegInputFile(const char *path_to_file);
     ~FFmpegInputFile();
 };
 
 class FFmpegInputWebCamera : public FFmpegInput {
   public:
-    std::shared_ptr<AVPacket> get() override;
     FFmpegInputWebCamera(const char *device_name);
     ~FFmpegInputWebCamera();
 };
+
+#endif

@@ -58,13 +58,11 @@ include_directories(
 
 file(GLOB_RECURSE SOURCE_FILES_DAEMON
     "${CMAKE_SOURCE_DIR}/src/*.cpp"
-    "${CMAKE_SOURCE_DIR}/src/ffmpeg/*.cpp"
     )
 
 file(GLOB_RECURSE HEADER_FILES_DAEMON
     "${CMAKE_SOURCE_DIR}/include/*.h"
     "${CMAKE_SOURCE_DIR}/include/*.hpp"
-    "${CMAKE_SOURCE_DIR}/include/ffmpeg/*.hpp"
     )
 
 add_executable(daemon ${HEADER_FILES_DAEMON} ${SOURCE_FILES_DAEMON})
