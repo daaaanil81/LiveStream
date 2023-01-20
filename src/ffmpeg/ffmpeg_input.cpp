@@ -1,6 +1,58 @@
+#include "ffmpeg/ffmpeg_input.hpp"
 #include <exception>
 
-#include "ffmpeg/ffmpeg_input.hpp"
+cv::Mat decode_packet(AVPacket *pPacket, AVCodecContext *pCodecContext) {
+
+    AVFrame *pFrame = av_frame_alloc();
+    int res = -1;
+    int cvLinesizes[1] = {0};
+    std::ostringstream os("frame");
+    AVPixelFormat src_pix_fmt = AV_PIX_FMT_YUYV422;
+    AVPixelFormat dst_pix_fmt = AV_PIX_FMT_BGR24;
+    std::unique_ptr<SwsContext, SwsContext_Deleter> sws_ctx(
+        nullptr, SwsContext_Deleter());
+    cv::Mat image;
+
+    /* Supply raw packet data as input to a decoder. */
+    res = avcodec_send_packet(pCodecContext, pPacket);
+    if (res != 0) {
+        throw std::logic_error("Failed to send packet to decoder\n");
+    }
+
+    /* Return decoded output data from a decoder. */
+    res = avcodec_receive_frame(pCodecContext, pFrame);
+    if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
+        return image;
+    } else if (res != 0) {
+        throw std::logic_error("Failed to receive frame from decoder\n");
+    }
+
+    std::cout << "Frame " << pCodecContext->frame_number
+              << " (type=" << av_get_picture_type_char(pFrame->pict_type)
+              << ", size=" << pFrame->pkt_size
+              << " bytes, format=" << pFrame->format << ") pts " << pFrame->pts
+              << " " << pFrame->width << " x " << pFrame->height
+              << " key_frame " << pFrame->key_frame << " [DTS "
+              << pFrame->coded_picture_number << "]" << std::endl;
+
+    /* create scaling context */
+    sws_ctx.reset(sws_getContext(pFrame->width, pFrame->height, src_pix_fmt,
+                                 pFrame->width, pFrame->height, dst_pix_fmt,
+                                 SWS_BILINEAR, nullptr, nullptr, nullptr));
+    image = cv::Mat(pFrame->height, pFrame->width, CV_8UC3);
+
+    cvLinesizes[0] = image.step1();
+
+    /* convert to destination format */
+    sws_scale(sws_ctx.get(), pFrame->data, pFrame->linesize, 0, pFrame->height,
+              &image.data, cvLinesizes);
+
+    os << pFrame->pts << ".jpg";
+
+    cv::imwrite("images/" + os.str(), image);
+
+    return image;
+};
 
 bool FFmpegInput::stream_status() const {
     if (!active_ && (packet_list_.size() == 0)) {
@@ -132,6 +184,8 @@ FFmpegInputFile::FFmpegInputFile(const char *path_to_file) {
             "Failed to initialize context to use the given codec");
     }
 
+    av_dump_format(spAVFormatContext_.get(), 0, path_to_file, 0);
+
     active_ = true;
 
     thread_ = std::thread(&FFmpegInputFile::read_video_stream, this);
@@ -230,6 +284,8 @@ FFmpegInputWebCamera::FFmpegInputWebCamera(const char *device_name) {
             "Failed to initialize context to use the given codec");
     }
 
+    av_dump_format(spAVFormatContext_.get(), 0, device_name, 0);
+
     active_ = true;
 
     thread_ = std::thread(&FFmpegInputFile::read_video_stream, this);
@@ -247,6 +303,23 @@ std::shared_ptr<AVPacket> FFmpegInput::get() {
     }
 
     return result_packet;
+}
+
+cv::Mat FFmpegInput::get_mat() {
+
+    cv::Mat packet_image;
+    std::shared_ptr<AVPacket> result_packet{nullptr, AVPacket_Deleter()};
+    std::lock_guard<std::mutex> lock(mutex_);
+    if (packet_list_.size() != 0) {
+        std::cout << "Before receiving packet: " << packet_list_.size();
+        result_packet = packet_list_.front();
+        packet_list_.pop_front();
+        std::cout << " After: " << packet_list_.size() << std::endl;
+        packet_image =
+            decode_packet(result_packet.get(), spCodecContext_.get());
+    }
+
+    return packet_image;
 }
 
 std::shared_ptr<stream_desc_t> FFmpegInput::get_stream_desc() const {

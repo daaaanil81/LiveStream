@@ -34,9 +34,6 @@ int main(int argc, char *argv[]) {
     }
 
     std::shared_ptr<FFmpegInput> ffmpegInput;
-    FFmpegOutput output("rtp://localhost:5004", ffmpegInput->get_stream_desc());
-
-    std::shared_ptr<AVPacket> received_packet;
 
     if (type == "-f") {
         ffmpegInput.reset(new FFmpegInputFile(pathStr.c_str()));
@@ -48,6 +45,9 @@ int main(int argc, char *argv[]) {
 
         return -1;
     }
+
+    FFmpegOutput output("rtp://localhost:5004", ffmpegInput->get_stream_desc());
+    std::shared_ptr<AVPacket> received_packet;
 
     try {
         rtc::InitLogger(rtc::LogLevel::Debug);
@@ -66,13 +66,13 @@ int main(int argc, char *argv[]) {
                 /* int len; */
                 /* auto buffer = socket.recvBuffer(len); */
                 /* ws.send(buffer, len); */
-                received_packet = ffmpegInput->get();
-                if (received_packet) {
-                    output.send(received_packet);
+                /* received_packet = ffmpegInput->get(); */
+                cv::Mat image = ffmpegInput->get_mat();
+                if (!image.empty()) {
+                    output.send_image(image);
                 }
             }
         }
-
     } catch (const std::exception &e) {
         std::cerr << "Error: " << e.what() << std::endl;
     }

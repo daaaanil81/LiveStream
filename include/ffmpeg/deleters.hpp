@@ -14,7 +14,19 @@ extern "C" {
 }
 #endif
 
+#include <opencv2/core/mat.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/opencv.hpp>
+
 #include <iostream>
+
+struct SwsContext_Deleter {
+    void operator()(SwsContext *ptr) {
+        if (ptr != nullptr) {
+            sws_freeContext(ptr);
+        }
+    }
+};
 
 struct AVFormatContext_Deleter {
     void operator()(AVFormatContext *ptr) {
@@ -38,7 +50,7 @@ struct AVCodecContext_Deleter {
 struct AVPacket_Deleter {
     void operator()(AVPacket *ptr) {
         if (ptr != nullptr) {
-            std::cout << "Call AVPacket_Deleter" << std::endl;
+            // std::cout << "Call AVPacket_Deleter" << std::endl;
             av_packet_free(&ptr);
         }
     }
@@ -56,7 +68,6 @@ struct stream_desc_t {
     int channels;
     int sample_rate;
     timebase_t timebase;
-    // media_type_t media_type;
     std::string codec_name;
 };
 

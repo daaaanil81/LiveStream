@@ -22,6 +22,7 @@ class FFmpegInput {
 
   public:
     std::shared_ptr<AVPacket> get();
+    cv::Mat get_mat();
     bool stream_status() const;
     void read_video_stream();
     void stop_stream();
