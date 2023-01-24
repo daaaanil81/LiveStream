@@ -325,7 +325,7 @@ std::shared_ptr<stream_desc_t> FFmpegInput::get_stream_desc() const {
 
     const auto &stream = spAVFormatContext_->streams[video_stream_index_];
     if (stream->codecpar->bit_rate == 0) {
-        desc->bit_rate = 200000;
+        desc->bit_rate = 2000000;
     } else {
         desc->bit_rate = stream->codecpar->bit_rate;
     }
