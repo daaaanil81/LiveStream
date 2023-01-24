@@ -33,23 +33,22 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    std::shared_ptr<FFmpegInput> ffmpegInput;
-
-    if (type == "-f") {
-        ffmpegInput.reset(new FFmpegInputFile(pathStr.c_str()));
-    } else if (type == "-d") {
-        ffmpegInput.reset(new FFmpegInputWebCamera(pathStr.c_str()));
-    } else {
-        std::cout << "Usage: " << argv[0] << " <path_to_file> <type -f/-d>"
-                  << std::endl;
-
-        return -1;
-    }
-
-    FFmpegOutput output("rtp://localhost:5004", ffmpegInput->get_stream_desc());
-    std::shared_ptr<AVPacket> received_packet;
-
     try {
+        std::shared_ptr<FFmpegInput> ffmpegInput;
+        if (type == "-f") {
+            ffmpegInput.reset(new FFmpegInputFile(pathStr.c_str()));
+        } else if (type == "-d") {
+            ffmpegInput.reset(new FFmpegInputWebCamera(pathStr.c_str()));
+        } else {
+            std::cout << "Usage: " << argv[0] << " <path_to_file> <type -f/-d>"
+                      << std::endl;
+
+            return -1;
+        }
+
+        FFmpegOutput output("rtp://127.0.0.1:5004",
+                            ffmpegInput->get_stream_desc());
+
         rtc::InitLogger(rtc::LogLevel::Debug);
 
         rtc::WebSocketServer::Configuration config;
@@ -58,25 +57,23 @@ int main(int argc, char *argv[]) {
         /* config.certificatePemFile = "./../../certificates/cert.pem"; */
         /* config.keyPemFile = "./../../certificates/key.pem"; */
         WSServerFacade ws(config);
-        SocketWrapper socket("127.0.0.1", 6000);
+        SocketWrapper socket("127.0.0.1", 5004);
 
         while (running.load()) {
-            if (ws.sizeTracks() > 0) {
-                /* std::cout << "RECV" << std::endl; */
-                /* int len; */
-                /* auto buffer = socket.recvBuffer(len); */
-                /* ws.send(buffer, len); */
-                /* received_packet = ffmpegInput->get(); */
-                cv::Mat image = ffmpegInput->get_mat();
-                if (!image.empty()) {
-                    output.send_image(image);
-                }
+            /* std::cout << "RECV" << std::endl; */
+            /* int len; */
+            /* auto buffer = socket.recvBuffer(len); */
+            /* ws.send(buffer, len); */
+            /* received_packet = ffmpegInput->get(); */
+            cv::Mat image = ffmpegInput->get_mat();
+            if (!image.empty() && ws.sizeTracks() > 0) {
+                output.send_image(image);
             }
         }
+        ffmpegInput->stop_stream();
     } catch (const std::exception &e) {
         std::cerr << "Error: " << e.what() << std::endl;
     }
 
-    ffmpegInput->stop_stream();
     return 0;
 }

@@ -11,7 +11,7 @@ bool FFmpegOutput::open_video_stream_(std::string url,
                                       AVStream **stream) {
 
     int status;
-    // create context
+
     status = avformat_alloc_output_context2(context, m_format_, m_format_->name,
                                             url.c_str());
     if (status < 0) {
@@ -20,86 +20,56 @@ bool FFmpegOutput::open_video_stream_(std::string url,
         return false;
     }
 
-    // open IO interface
     status = avio_open(&(*context)->pb, url.c_str(), AVIO_FLAG_WRITE);
     if (status < 0) {
         std::cerr << "error: avio_open; line: " << __LINE__ << std::endl;
         return false;
     }
 
-    // set stream description
-
-    // AVCodec *codec = avcodec_find_encoder_by_name(desc->codec_name.c_str());
     AVCodec *codec = avcodec_find_encoder_by_name("libx264");
     if (!codec) {
-        auto name = desc->codec_name;
-        std::transform(name.begin(), name.end(), name.begin(),
-                       [](unsigned char c) { return std::tolower(c); });
-
-        if (name == "h264") {
-            name = "libx264";
-        }
-
-        codec = avcodec_find_encoder_by_name(name.c_str());
-        if (!codec) {
-            std::cerr << "error: avcodec_find_encoder_by_name; line: "
-                      << __LINE__ << std::endl;
-            std::cerr << "Input: " << desc->codec_name << std::endl;
-            return false;
-        }
+        std::cerr << "error: avcodec_find_encoder_by_name; line: " << __LINE__
+                  << std::endl;
+        return false;
     }
 
-    cctx = avcodec_alloc_context3(codec);
-
-    if (!cctx) {
-        std::cout << "can't create codec context" << std::endl;
-        return -1;
+    cctx_ = std::shared_ptr<AVCodecContext>{avcodec_alloc_context3(codec),
+                                            AVCodecContext_Deleter()};
+    if (!cctx_) {
+        std::cerr << "Can't create codec context" << std::endl;
+        return false;
     }
 
-    cctx->bit_rate = 147456000;
-    cctx->width = 1280;
-    cctx->height = 720;
-    cctx->gop_size = 25;
-    cctx->time_base.num = 1;
-    cctx->time_base.den = 30;
-    cctx->max_b_frames = 1;
-    cctx->pix_fmt = AV_PIX_FMT_YUV420P;
-    // cctx->pix_fmt = AV_PIX_FMT_YUYV422;
-    cctx->codec_type = AVMEDIA_TYPE_VIDEO;
-    cctx->framerate = AVRational{1, 30};
-    cctx->time_base = AVRational{1, 30};
-    std::cout << "Codec id: " << cctx->codec_id << std::endl;
-    // cctx->flags ^= AV_CODEC_FLAG_GLOBAL_HEADER;
+    cctx_->bit_rate = desc->bit_rate / 2;
+    cctx_->width = desc->width;
+    cctx_->height = desc->height;
+    cctx_->gop_size = 25;
+    cctx_->time_base.num = 1;
+    cctx_->time_base.den = 30;
+    cctx_->max_b_frames = 1;
+    cctx_->pix_fmt = AV_PIX_FMT_YUV420P;
+    cctx_->codec_type = AVMEDIA_TYPE_VIDEO;
+    cctx_->framerate = AVRational{1, 30};
+    cctx_->time_base = AVRational{1, 30};
 
     int tmp;
-    if (cctx->codec_id == AV_CODEC_ID_H264) {
-        tmp = av_opt_set(cctx->priv_data, "preset", "ultrafast", 0);
-        tmp = av_opt_set(cctx->priv_data, "tune", "zerolatency", 0);
+    if (cctx_->codec_id == AV_CODEC_ID_H264) {
+        tmp = av_opt_set(cctx_->priv_data, "preset", "ultrafast", 0);
+        tmp = av_opt_set(cctx_->priv_data, "tune", "zerolatency", 0);
     }
-
-    std::cout << "Flags " << cctx->flags << std::endl;
 
     *stream = avformat_new_stream(*context, codec);
 
     (*stream)->time_base = (AVRational){1, 30};
     (*stream)->r_frame_rate = (AVRational){1, 30};
 
-    std::cout << "bitrate " << (*stream)->codecpar->bit_rate << std::endl;
-    std::cout << "width " << (*stream)->codecpar->width << std::endl;
-    std::cout << "height " << (*stream)->codecpar->height << std::endl;
-    std::cout << "num " << (*stream)->time_base.num << std::endl;
-    std::cout << "den " << (*stream)->time_base.den << std::endl;
-    std::cout << "codec id " << (*stream)->codecpar->codec_id << std::endl;
-    std::cout << "codec type " << (*stream)->codecpar->codec_type << std::endl;
-    // std::cout << "Flags " << (*stream)->parser->priv_data << std::endl;
-
     if ((*context)->oformat->flags & AVFMT_GLOBALHEADER) {
         (*stream)->codec->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
     }
 
-    int res = avcodec_open2(cctx, codec, NULL);
+    int res = avcodec_open2(cctx_.get(), codec, NULL);
 
-    avcodec_parameters_from_context((*stream)->codecpar, cctx);
+    avcodec_parameters_from_context((*stream)->codecpar, cctx_.get());
 
     std::cout << "bitrate " << (*stream)->codecpar->bit_rate << std::endl;
     std::cout << "width " << (*stream)->codecpar->width << std::endl;
@@ -150,84 +120,8 @@ FFmpegOutput::FFmpegOutput(std::string video_url,
     spAVFormatContext_.reset(m_video_context);
 }
 
-bool FFmpegOutput::send(std::shared_ptr<AVPacket> pPacket) {
-
-    if (!spAVFormatContext_) {
-        return false;
-    }
-
-    // pPacket->stream_index = m_video_stream_->index;
-    // std::cout << pPacket->dts << " " << pPacket->pts << std::endl;
-
-    // int status = avformat_write_header(spAVFormatContext_.get(), NULL);
-    // auto status1 =
-    //     av_interleaved_write_frame(spAVFormatContext_.get(), pPacket.get());
-    // av_packet_unref(pPacket.get());
-
-    int j = 0;
-
-    AVPacket *pkt = av_packet_alloc();
-    AVFrame *frame = av_frame_alloc();
-    int i, ret, x, y, got_output;
-
-    frame->format = cctx->pix_fmt;
-    frame->width = cctx->width;
-    frame->height = cctx->height;
-    ret = av_image_alloc(frame->data, frame->linesize, cctx->width,
-                         cctx->height, cctx->pix_fmt, 32);
-
-    /* prepare a dummy image */
-    /* Y */
-    for (y = 0; y < 720; y++) {
-        for (x = 0; x < 1080; x++) {
-            frame->data[0][y * frame->linesize[0] + x] = x + y + 8 * 3;
-        }
-    }
-    /* Cb and Cr */
-    for (y = 0; y < 720 / 2; y++) {
-        for (x = 0; x < 1080 / 2; x++) {
-            frame->data[1][y * frame->linesize[1] + x] = 128 + y + 8 * 2;
-            frame->data[2][y * frame->linesize[2] + x] = 64 + x + 8 * 5;
-        }
-    }
-    frame->pts = i;
-    /* encode the image */
-    ret = avcodec_send_frame(cctx, frame);
-
-    if (ret == AVERROR_EOF) {
-        got_output = false;
-        printf("Stream EOF 1\n");
-    } else if (ret == AVERROR(EAGAIN)) {
-        got_output = false;
-        printf("Stream EAGAIN 1\n");
-    } else {
-        got_output = true;
-    }
-
-    ret = avcodec_receive_packet(cctx, pkt);
-
-    if (ret == AVERROR_EOF) {
-        got_output = false;
-        printf("Stream EOF\n");
-    } else if (ret == AVERROR(EAGAIN)) {
-        got_output = false;
-        printf("Stream EAGAIN\n");
-    } else {
-        got_output = true;
-    }
-
-    if (got_output) {
-        printf("Write frame %3d (size=%5d)\n", j++, pkt->size);
-        av_interleaved_write_frame(spAVFormatContext_.get(), pkt);
-        av_packet_unref(pkt);
-    }
-
-    return 0;
-}
-
 bool FFmpegOutput::send_image(cv::Mat image) {
 
-    int image_n = 0;
     if (image.empty()) {
         std::cout << "Empty" << std::endl;
     }
@@ -238,30 +132,33 @@ bool FFmpegOutput::send_image(cv::Mat image) {
     int cvLinesizes[1];
     cvLinesizes[0] = image.step1();
 
-    AVPacket *pkt = av_packet_alloc();
+    std::shared_ptr<AVPacket> pkt{av_packet_alloc(), AVPacket_Deleter()};
 
-    AVFrame *frame = av_frame_alloc();
+    std::shared_ptr<AVFrame> frame{av_frame_alloc(), AVFrame_Deleter()};
 
-    frame->format = cctx->pix_fmt;
-    frame->width = cctx->width;
-    frame->height = cctx->height;
+    frame->format = cctx_->pix_fmt;
+    frame->width = cctx_->width;
+    frame->height = cctx_->height;
     frame->pts = pts_frame_;
     pts_frame_ += 1;
-    ret = av_image_alloc(frame->data, frame->linesize, cctx->width,
-                         cctx->height, cctx->pix_fmt, 32);
+    ret = av_image_alloc(frame->data, frame->linesize, cctx_->width,
+                         cctx_->height, cctx_->pix_fmt, 32);
 
     std::cout << "Image allocated " << frame->format << std::endl;
 
-    SwsContext *conversion = sws_getContext(
-        width, height, AVPixelFormat::AV_PIX_FMT_BGR24, width, height,
-        AVPixelFormat::AV_PIX_FMT_YUV420P, SWS_BICUBIC, NULL, NULL, NULL);
+    std::unique_ptr<SwsContext, SwsContext_Deleter> sws_ctx(
+        nullptr, SwsContext_Deleter());
 
-    sws_scale(conversion, &image.data, cvLinesizes, 0, height, frame->data,
+    sws_ctx.reset(sws_getContext(
+        width, height, AVPixelFormat::AV_PIX_FMT_BGR24, width, height,
+        AVPixelFormat::AV_PIX_FMT_YUV420P, SWS_BICUBIC, NULL, NULL, NULL));
+
+    sws_scale(sws_ctx.get(), &image.data, cvLinesizes, 0, height, frame->data,
               frame->linesize);
 
     std::cout << "Image scaled" << std::endl;
 
-    ret = avcodec_send_frame(cctx, frame);
+    ret = avcodec_send_frame(cctx_.get(), frame.get());
 
     if (ret == AVERROR_EOF) {
         got_output = false;
@@ -271,7 +168,7 @@ bool FFmpegOutput::send_image(cv::Mat image) {
         printf("Stream EAGAIN\n");
     }
 
-    ret = avcodec_receive_packet(cctx, pkt);
+    ret = avcodec_receive_packet(cctx_.get(), pkt.get());
 
     if (ret == AVERROR_EOF) {
         got_output = false;
@@ -284,10 +181,11 @@ bool FFmpegOutput::send_image(cv::Mat image) {
     }
 
     if (got_output) {
-        std::cout << "Write frame" << frame->pts << std::endl;
-        av_interleaved_write_frame(spAVFormatContext_.get(), pkt);
-        av_packet_unref(pkt);
+        std::ostringstream os("frame");
+        os << frame->pts << ".jpg";
+        cv::imwrite("images_2/" + os.str(), image);
+        std::cout << "Write frame " << frame->pts << std::endl;
+        av_interleaved_write_frame(spAVFormatContext_.get(), pkt.get());
+        av_packet_unref(pkt.get());
     }
-
-    sws_freeContext(conversion);
 }

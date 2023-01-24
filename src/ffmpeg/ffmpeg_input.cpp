@@ -3,11 +3,10 @@
 
 cv::Mat decode_packet(AVPacket *pPacket, AVCodecContext *pCodecContext) {
 
-    AVFrame *pFrame = av_frame_alloc();
+    std::shared_ptr<AVFrame> pFrame{av_frame_alloc(), AVFrame_Deleter()};
     int res = -1;
     int cvLinesizes[1] = {0};
     std::ostringstream os("frame");
-    AVPixelFormat src_pix_fmt = AV_PIX_FMT_YUYV422;
     AVPixelFormat dst_pix_fmt = AV_PIX_FMT_BGR24;
     std::unique_ptr<SwsContext, SwsContext_Deleter> sws_ctx(
         nullptr, SwsContext_Deleter());
@@ -20,7 +19,7 @@ cv::Mat decode_packet(AVPacket *pPacket, AVCodecContext *pCodecContext) {
     }
 
     /* Return decoded output data from a decoder. */
-    res = avcodec_receive_frame(pCodecContext, pFrame);
+    res = avcodec_receive_frame(pCodecContext, pFrame.get());
     if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
         return image;
     } else if (res != 0) {
@@ -35,7 +34,8 @@ cv::Mat decode_packet(AVPacket *pPacket, AVCodecContext *pCodecContext) {
               << " key_frame " << pFrame->key_frame << " [DTS "
               << pFrame->coded_picture_number << "]" << std::endl;
 
-    /* create scaling context */
+    AVPixelFormat src_pix_fmt = AVPixelFormat(pFrame->format);
+
     sws_ctx.reset(sws_getContext(pFrame->width, pFrame->height, src_pix_fmt,
                                  pFrame->width, pFrame->height, dst_pix_fmt,
                                  SWS_BILINEAR, nullptr, nullptr, nullptr));
@@ -43,7 +43,6 @@ cv::Mat decode_packet(AVPacket *pPacket, AVCodecContext *pCodecContext) {
 
     cvLinesizes[0] = image.step1();
 
-    /* convert to destination format */
     sws_scale(sws_ctx.get(), pFrame->data, pFrame->linesize, 0, pFrame->height,
               &image.data, cvLinesizes);
 
@@ -84,9 +83,6 @@ void FFmpegInput::read_video_stream() {
                 packet_list_.push_back(spPacket);
                 std::cout << "Pushing packet, list size: "
                           << packet_list_.size() << std::endl;
-
-            } else {
-                av_packet_unref(spPacket.get());
             }
         } else {
             active_ = false;
@@ -328,15 +324,13 @@ std::shared_ptr<stream_desc_t> FFmpegInput::get_stream_desc() const {
     memset(desc.get(), 0, sizeof(stream_desc_t));
 
     const auto &stream = spAVFormatContext_->streams[video_stream_index_];
-    desc->bit_rate = stream->codecpar->bit_rate;
-
+    if (stream->codecpar->bit_rate == 0) {
+        desc->bit_rate = 200000;
+    } else {
+        desc->bit_rate = stream->codecpar->bit_rate;
+    }
     desc->width = stream->codecpar->width;
     desc->height = stream->codecpar->height;
-
-    desc->sample_rate = stream->codecpar->sample_rate;
-    desc->timebase.numerator = stream->time_base.num;
-    desc->timebase.denominator = stream->time_base.den;
-    desc->codec_name = avcodec_get_name(stream->codecpar->codec_id);
 
     return desc;
 }

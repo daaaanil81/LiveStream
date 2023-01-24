@@ -56,6 +56,14 @@ struct AVPacket_Deleter {
     }
 };
 
+struct AVFrame_Deleter {
+    void operator()(AVFrame *ptr) {
+        if (ptr != nullptr) {
+            av_frame_free(&ptr);
+        }
+    }
+};
+
 struct timebase_t {
     int numerator;
     int denominator;
@@ -65,10 +73,6 @@ struct stream_desc_t {
     int64_t bit_rate;
     int width;
     int height;
-    int channels;
-    int sample_rate;
-    timebase_t timebase;
-    std::string codec_name;
 };
 
 #endif

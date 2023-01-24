@@ -11,7 +11,6 @@ class FFmpegOutput {
                  std::shared_ptr<stream_desc_t> video_desc);
     // ~FFmpegOutput();
 
-    bool send(std::shared_ptr<AVPacket> pPacket);
     bool send_image(cv::Mat image);
 
   private:
@@ -20,7 +19,7 @@ class FFmpegOutput {
     AVOutputFormat *m_format_;
     std::shared_ptr<AVFormatContext> spAVFormatContext_;
     AVStream *m_video_stream_;
-    AVCodecContext *cctx;
+    std::shared_ptr<AVCodecContext> cctx_;
 
     bool open_video_stream_(std::string __url,
                             std::shared_ptr<stream_desc_t> __desc,
