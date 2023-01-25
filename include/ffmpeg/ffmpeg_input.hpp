@@ -27,6 +27,7 @@ class FFmpegInput {
     void read_video_stream();
     void stop_stream();
     std::shared_ptr<stream_desc_t> get_stream_desc() const;
+    cv::Mat decode_packet(std::shared_ptr<AVPacket> packet);
 };
 
 class FFmpegInputFile : public FFmpegInput {

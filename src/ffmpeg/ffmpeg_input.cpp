@@ -1,32 +1,33 @@
 #include "ffmpeg/ffmpeg_input.hpp"
 #include <exception>
 
-cv::Mat decode_packet(AVPacket *pPacket, AVCodecContext *pCodecContext) {
+cv::Mat FFmpegInput::decode_packet(std::shared_ptr<AVPacket> pPacket) {
 
-    std::shared_ptr<AVFrame> pFrame{av_frame_alloc(), AVFrame_Deleter()};
-    int res = -1;
+    if (!pPacket) {
+        return cv::Mat{};
+    }
+
     int cvLinesizes[1] = {0};
-    std::ostringstream os("frame");
     AVPixelFormat dst_pix_fmt = AV_PIX_FMT_BGR24;
+    std::shared_ptr<AVFrame> pFrame{av_frame_alloc(), AVFrame_Deleter()};
     std::unique_ptr<SwsContext, SwsContext_Deleter> sws_ctx(
         nullptr, SwsContext_Deleter());
-    cv::Mat image;
 
     /* Supply raw packet data as input to a decoder. */
-    res = avcodec_send_packet(pCodecContext, pPacket);
+    int res = avcodec_send_packet(spCodecContext_.get(), pPacket.get());
     if (res != 0) {
         throw std::logic_error("Failed to send packet to decoder\n");
     }
 
     /* Return decoded output data from a decoder. */
-    res = avcodec_receive_frame(pCodecContext, pFrame.get());
+    res = avcodec_receive_frame(spCodecContext_.get(), pFrame.get());
     if (res == AVERROR(EAGAIN) || res == AVERROR_EOF) {
-        return image;
+        return cv::Mat{};
     } else if (res != 0) {
         throw std::logic_error("Failed to receive frame from decoder\n");
     }
 
-    std::cout << "Frame " << pCodecContext->frame_number
+    std::cout << "Frame " << spCodecContext_->frame_number
               << " (type=" << av_get_picture_type_char(pFrame->pict_type)
               << ", size=" << pFrame->pkt_size
               << " bytes, format=" << pFrame->format << ") pts " << pFrame->pts
@@ -38,17 +39,13 @@ cv::Mat decode_packet(AVPacket *pPacket, AVCodecContext *pCodecContext) {
 
     sws_ctx.reset(sws_getContext(pFrame->width, pFrame->height, src_pix_fmt,
                                  pFrame->width, pFrame->height, dst_pix_fmt,
-                                 SWS_BILINEAR, nullptr, nullptr, nullptr));
-    image = cv::Mat(pFrame->height, pFrame->width, CV_8UC3);
+                                 SWS_BICUBIC, nullptr, nullptr, nullptr));
+    cv::Mat image = cv::Mat(pFrame->height, pFrame->width, CV_8UC3);
 
     cvLinesizes[0] = image.step1();
 
     sws_scale(sws_ctx.get(), pFrame->data, pFrame->linesize, 0, pFrame->height,
               &image.data, cvLinesizes);
-
-    os << pFrame->pts << ".jpg";
-
-    cv::imwrite("images/" + os.str(), image);
 
     return image;
 };
@@ -63,9 +60,15 @@ bool FFmpegInput::stream_status() const {
 
 void FFmpegInput::stop_stream() { active_ = false; };
 
-FFmpegInputFile::~FFmpegInputFile() { thread_.join(); };
+FFmpegInputFile::~FFmpegInputFile() {
+    active_ = false;
+    thread_.join();
+};
 
-FFmpegInputWebCamera::~FFmpegInputWebCamera() { thread_.join(); };
+FFmpegInputWebCamera::~FFmpegInputWebCamera() {
+    active_ = false;
+    thread_.join();
+};
 
 void FFmpegInput::read_video_stream() {
 
@@ -125,7 +128,7 @@ FFmpegInputFile::FFmpegInputFile(const char *path_to_file) {
     std::cout << "Count of Stream: " << spAVFormatContext_->nb_streams
               << std::endl;
 
-    for (int i = 0; i < spAVFormatContext_->nb_streams; i++) {
+    for (size_t i = 0; i < spAVFormatContext_->nb_streams; i++) {
 
         AVCodecParameters *pLocalCodecParameters =
             spAVFormatContext_->streams[i]->codecpar;
@@ -226,7 +229,7 @@ FFmpegInputWebCamera::FFmpegInputWebCamera(const char *device_name) {
     std::cout << "Count of Stream: " << spAVFormatContext_->nb_streams
               << std::endl;
 
-    for (int i = 0; i < spAVFormatContext_->nb_streams; i++) {
+    for (size_t i = 0; i < spAVFormatContext_->nb_streams; i++) {
 
         AVCodecParameters *pLocalCodecParameters =
             spAVFormatContext_->streams[i]->codecpar;
@@ -292,10 +295,10 @@ std::shared_ptr<AVPacket> FFmpegInput::get() {
     std::shared_ptr<AVPacket> result_packet = nullptr;
     std::lock_guard<std::mutex> lock(mutex_);
     if (packet_list_.size() != 0) {
-        std::cout << "Before receiving packet: " << packet_list_.size();
+        /* std::cout << "Before receiving packet: " << packet_list_.size(); */
         result_packet = packet_list_.front();
         packet_list_.pop_front();
-        std::cout << " After: " << packet_list_.size() << std::endl;
+        /* std::cout << " After: " << packet_list_.size() << std::endl; */
     }
 
     return result_packet;
@@ -307,12 +310,11 @@ cv::Mat FFmpegInput::get_mat() {
     std::shared_ptr<AVPacket> result_packet{nullptr, AVPacket_Deleter()};
     std::lock_guard<std::mutex> lock(mutex_);
     if (packet_list_.size() != 0) {
-        std::cout << "Before receiving packet: " << packet_list_.size();
+        /* std::cout << "Before receiving packet: " << packet_list_.size(); */
         result_packet = packet_list_.front();
         packet_list_.pop_front();
-        std::cout << " After: " << packet_list_.size() << std::endl;
-        packet_image =
-            decode_packet(result_packet.get(), spCodecContext_.get());
+        /* std::cout << " After: " << packet_list_.size() << std::endl; */
+        packet_image = decode_packet(result_packet);
     }
 
     return packet_image;
@@ -329,8 +331,14 @@ std::shared_ptr<stream_desc_t> FFmpegInput::get_stream_desc() const {
     } else {
         desc->bit_rate = stream->codecpar->bit_rate;
     }
+
     desc->width = stream->codecpar->width;
     desc->height = stream->codecpar->height;
+    desc->gop_size = spCodecContext_->gop_size;
+    desc->time_base = stream->time_base;
+    desc->max_b_frames = spCodecContext_->max_b_frames;
+    desc->framerate = spCodecContext_->framerate;
+    desc->r_frame_rate = stream->r_frame_rate;
 
     return desc;
 }

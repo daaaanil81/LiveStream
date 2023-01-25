@@ -73,6 +73,11 @@ struct stream_desc_t {
     int64_t bit_rate;
     int width;
     int height;
+    int gop_size;
+    AVRational time_base;
+    int max_b_frames;
+    AVRational framerate;
+    AVRational r_frame_rate;
 };
 
 #endif
