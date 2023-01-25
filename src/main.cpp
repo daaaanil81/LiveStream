@@ -42,7 +42,6 @@ int main(int argc, char *argv[]) {
         } else {
             std::cout << "Usage: " << argv[0] << " <path_to_file> <type -f/-d>"
                       << std::endl;
-
             return -1;
         }
 
@@ -59,18 +58,23 @@ int main(int argc, char *argv[]) {
         WSServerFacade ws(config);
         SocketWrapper socket("127.0.0.1", 5004);
 
-        while (running.load()) {
-            /* std::cout << "RECV" << std::endl; */
-            /* int len; */
-            /* auto buffer = socket.recvBuffer(len); */
-            /* ws.send(buffer, len); */
-            /* received_packet = ffmpegInput->get(); */
-            cv::Mat image = ffmpegInput->get_mat();
-            if (!image.empty() && ws.sizeTracks() > 0) {
-                output.send_image(image);
+        auto stream = std::async(std::launch::async, [&] {
+            while (running.load() && ffmpegInput->stream_status()) {
+                cv::Mat image = ffmpegInput->get_mat();
+                if (!image.empty()) {
+                    output.send_image(image);
+                }
             }
+        });
+
+        /* while (running.load() && ffmpegInput->stream_status()) { */
+        while (running.load()) {
+            int len;
+            auto buffer = socket.recvBuffer(len);
+            ws.send(buffer, len);
         }
-        ffmpegInput->stop_stream();
+
+        /* stream.wait(); */
     } catch (const std::exception &e) {
         std::cerr << "Error: " << e.what() << std::endl;
     }
