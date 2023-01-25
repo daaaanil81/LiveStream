@@ -191,8 +191,6 @@ bool WSServerFacade::send(std::shared_ptr<char[]> buffer, size_t len) {
             if (!track->isOpen()) {
                 continue;
             }
-            std::cout << len << std::endl;
-
             track->send(reinterpret_cast<const std::byte *>(buffer.get()), len);
         }
     }
