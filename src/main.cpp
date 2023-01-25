@@ -8,6 +8,7 @@
 
 #include "ffmpeg/ffmpeg_input.hpp"
 #include "ffmpeg/ffmpeg_output.hpp"
+#include "opencv/opencv.hpp"
 #include "socket/socket.h"
 #include "socket/ws_socket.h"
 
@@ -44,9 +45,11 @@ int main(int argc, char *argv[]) {
                       << std::endl;
             return -1;
         }
+        std::shared_ptr<AiTask> opencv_processing(new LPR(
+            "../voc.txt", "../crnn_cs.onnx", "../plate_detection.onnx"));
 
-        FFmpegOutput output("rtp://127.0.0.1:5004",
-                            ffmpegInput->get_stream_desc());
+        std::shared_ptr<FFmpegOutput> output(new FFmpegOutput(
+            "rtp://127.0.0.1:5004", ffmpegInput->get_stream_desc()));
 
         rtc::InitLogger(rtc::LogLevel::Debug);
 
@@ -62,7 +65,8 @@ int main(int argc, char *argv[]) {
             while (running.load() && ffmpegInput->stream_status()) {
                 cv::Mat image = ffmpegInput->get_mat();
                 if (!image.empty()) {
-                    output.send_image(image);
+                    image = opencv_processing->process_image(image);
+                    output->send_image(image);
                 }
             }
         });
