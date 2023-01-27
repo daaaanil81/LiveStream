@@ -1,7 +1,8 @@
 #include "ffmpeg/ffmpeg_input.hpp"
 #include <exception>
 
-cv::Mat FFmpegInput::decode_packet(std::shared_ptr<AVPacket> pPacket) {
+cv::Mat FFmpegInput::decode_packet(std::shared_ptr<AVPacket> pPacket,
+                                   int64_t &pts) {
 
     if (!pPacket) {
         return cv::Mat{};
@@ -34,6 +35,8 @@ cv::Mat FFmpegInput::decode_packet(std::shared_ptr<AVPacket> pPacket) {
               << " " << pFrame->width << " x " << pFrame->height
               << " key_frame " << pFrame->key_frame << " [DTS "
               << pFrame->coded_picture_number << "]" << std::endl;
+
+    pts = pFrame->pts;
 
     AVPixelFormat src_pix_fmt = AVPixelFormat(pFrame->format);
 
@@ -84,8 +87,8 @@ void FFmpegInput::read_video_stream() {
                 // std::cout << pPacket->pos << std::endl;
                 std::lock_guard<std::mutex> lock(mutex_);
                 packet_list_.push_back(spPacket);
-                std::cout << "Pushing packet, list size: "
-                          << packet_list_.size() << std::endl;
+                /* std::cout << "Pushing packet, list size: " */
+                /* << packet_list_.size() << std::endl; */
             }
         } else {
             active_ = false;
@@ -304,7 +307,7 @@ std::shared_ptr<AVPacket> FFmpegInput::get() {
     return result_packet;
 }
 
-cv::Mat FFmpegInput::get_mat() {
+cv::Mat FFmpegInput::get_mat(int64_t &pts) {
 
     cv::Mat packet_image;
     std::shared_ptr<AVPacket> result_packet{nullptr, AVPacket_Deleter()};
@@ -314,7 +317,7 @@ cv::Mat FFmpegInput::get_mat() {
         result_packet = packet_list_.front();
         packet_list_.pop_front();
         /* std::cout << " After: " << packet_list_.size() << std::endl; */
-        packet_image = decode_packet(result_packet);
+        packet_image = decode_packet(result_packet, pts);
     }
 
     return packet_image;
@@ -337,8 +340,8 @@ std::shared_ptr<stream_desc_t> FFmpegInput::get_stream_desc() const {
     desc->gop_size = spCodecContext_->gop_size;
     desc->time_base = stream->time_base;
     desc->max_b_frames = spCodecContext_->max_b_frames;
-    desc->framerate = spCodecContext_->framerate;
     desc->r_frame_rate = stream->r_frame_rate;
+    desc->avg_frame_rate = stream->avg_frame_rate;
 
     return desc;
 }

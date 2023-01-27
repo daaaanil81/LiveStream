@@ -78,6 +78,7 @@ struct stream_desc_t {
     int max_b_frames;
     AVRational framerate;
     AVRational r_frame_rate;
+    AVRational avg_frame_rate;
 };
 
 #endif

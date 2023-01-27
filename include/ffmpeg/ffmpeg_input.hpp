@@ -22,12 +22,12 @@ class FFmpegInput {
 
   public:
     std::shared_ptr<AVPacket> get();
-    cv::Mat get_mat();
+    cv::Mat get_mat(int64_t &pts);
     bool stream_status() const;
     void read_video_stream();
     void stop_stream();
     std::shared_ptr<stream_desc_t> get_stream_desc() const;
-    cv::Mat decode_packet(std::shared_ptr<AVPacket> packet);
+    cv::Mat decode_packet(std::shared_ptr<AVPacket> packet, int64_t &pts);
 };
 
 class FFmpegInputFile : public FFmpegInput {

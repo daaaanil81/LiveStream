@@ -81,8 +81,6 @@ LPR::LPR(std::string path_to_vocabulary, std::string path_to_rec_model,
 
 cv::Mat LPR::process_image(cv::Mat &input_image) {
 
-    cv::Size S = cv::Size(input_image.cols, input_image.rows);
-
     // Convert to blob.
     cv::Mat blob;
 
@@ -107,10 +105,9 @@ cv::Mat LPR::process_image(cv::Mat &input_image) {
     float y_factor = input_image.rows / INPUT_HEIGHT;
 
     const int rows = outputs[0].size().width;
-    const int count_data = 6;
 
     float *data = (float *)outputs[0].data;
-    for (size_t i = 0; i < rows; ++i) {
+    for (int i = 0; i < rows; ++i) {
         float *dataPoint = data + i * 6;
         float confidence = dataPoint[4];
         if (confidence > CONFIDENCE_THRESHOLD) {

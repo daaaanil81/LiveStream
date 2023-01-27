@@ -11,7 +11,7 @@ class FFmpegOutput {
                  std::shared_ptr<stream_desc_t> video_desc);
     // ~FFmpegOutput();
 
-    bool send_image(cv::Mat &image);
+    bool send_image(cv::Mat &image, int64_t pts);
 
   private:
     static uint64_t pts_frame_;
@@ -21,7 +21,7 @@ class FFmpegOutput {
     AVStream *m_video_stream_;
     std::shared_ptr<AVCodecContext> cctx_;
 
-    std::shared_ptr<AVFrame> mat2frame(cv::Mat &image);
+    std::shared_ptr<AVFrame> mat2frame(cv::Mat &image, int64_t pts);
     bool open_video_stream(std::string url, std::shared_ptr<stream_desc_t> desc,
                            AVFormatContext *&context, AVStream *&stream);
     void generate_sdp(AVFormatContext *pFormatCtx);

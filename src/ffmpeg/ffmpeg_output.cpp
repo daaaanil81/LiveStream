@@ -38,17 +38,17 @@ bool FFmpegOutput::open_video_stream(std::string url,
         return false;
     }
 
-    cctx_->bit_rate = desc->bit_rate;
+    /* cctx_->bit_rate = desc->bit_rate; */
     cctx_->width = desc->width;
     cctx_->height = desc->height;
     cctx_->gop_size = desc->gop_size;
-    cctx_->time_base.num = 1;
-    cctx_->time_base.den = 30;
-    /* cctx_->time_base = desc->time_base; */
+    /* cctx_->time_base.num = 1; */
+    /* cctx_->time_base.den = 30; */
+    cctx_->time_base = desc->time_base;
     cctx_->max_b_frames = desc->max_b_frames;
     cctx_->pix_fmt = AV_PIX_FMT_YUV420P;
     cctx_->codec_type = AVMEDIA_TYPE_VIDEO;
-    cctx_->framerate = desc->framerate;
+    /* cctx_->framerate = desc->framerate; */
     /* cctx_->bit_rate = desc->bit_rate / 2; */
     /* cctx_->width = desc->width; */
     /* cctx_->height = desc->height; */
@@ -71,8 +71,9 @@ bool FFmpegOutput::open_video_stream(std::string url,
 
     stream = avformat_new_stream(context, codec);
 
-    stream->r_frame_rate = desc->r_frame_rate;
-    /* stream->r_frame_rate = (AVRational){1, 30}; */
+    /* stream->r_frame_rate = desc->r_frame_rate; */
+    stream->avg_frame_rate = desc->avg_frame_rate;
+    stream->time_base = cctx_->time_base;
 
     int res = avcodec_open2(cctx_.get(), codec, NULL);
     if (res < 0) {
@@ -130,12 +131,12 @@ FFmpegOutput::FFmpegOutput(std::string video_url,
 
     generate_sdp(m_video_context);
 
-    /* av_dump_format(m_video_context, 0, m_video_url_.c_str(), 1); */
+    av_dump_format(m_video_context, 0, m_video_url_.c_str(), 1);
 
     spAVFormatContext_.reset(m_video_context);
 }
 
-std::shared_ptr<AVFrame> FFmpegOutput::mat2frame(cv::Mat &image) {
+std::shared_ptr<AVFrame> FFmpegOutput::mat2frame(cv::Mat &image, int64_t pts) {
 
     int width = image.cols;
     int height = image.rows;
@@ -147,8 +148,9 @@ std::shared_ptr<AVFrame> FFmpegOutput::mat2frame(cv::Mat &image) {
     frame->format = cctx_->pix_fmt;
     frame->width = cctx_->width;
     frame->height = cctx_->height;
-    frame->pts = pts_frame_;
-    pts_frame_ += 1;
+    frame->pts = pts;
+    /* frame->pts = pts_frame_; */
+    /* pts_frame_ += 1; */
     av_image_alloc(frame->data, frame->linesize, cctx_->width, cctx_->height,
                    cctx_->pix_fmt, 32);
 
@@ -170,7 +172,7 @@ std::shared_ptr<AVFrame> FFmpegOutput::mat2frame(cv::Mat &image) {
     return frame;
 }
 
-bool FFmpegOutput::send_image(cv::Mat &image) {
+bool FFmpegOutput::send_image(cv::Mat &image, int64_t pts) {
 
     if (image.empty()) {
         std::cout << "Empty" << std::endl;
@@ -181,7 +183,7 @@ bool FFmpegOutput::send_image(cv::Mat &image) {
 
     std::shared_ptr<AVPacket> pkt{av_packet_alloc(), AVPacket_Deleter()};
 
-    std::shared_ptr<AVFrame> frame = mat2frame(image);
+    std::shared_ptr<AVFrame> frame = mat2frame(image, pts);
 
     ret = avcodec_send_frame(cctx_.get(), frame.get());
 
@@ -209,7 +211,7 @@ bool FFmpegOutput::send_image(cv::Mat &image) {
         std::ostringstream os("frame");
         os << frame->pts << ".jpg";
         cv::imwrite("images_2/" + os.str(), image);
-        std::cout << "Write frame " << frame->pts << std::endl;
+        /* std::cout << "Write frame " << frame->pts << std::endl; */
         av_interleaved_write_frame(spAVFormatContext_.get(), pkt.get());
         av_packet_unref(pkt.get());
     }

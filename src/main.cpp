@@ -45,8 +45,8 @@ int main(int argc, char *argv[]) {
                       << std::endl;
             return -1;
         }
-        std::shared_ptr<AiTask> opencv_processing(new LPR(
-            "../voc.txt", "../crnn_cs.onnx", "../plate_detection.onnx"));
+        std::shared_ptr<AiTask> opencv_processing(
+            new LPR("voc.txt", "crnn_cs.onnx", "plate_detection.onnx"));
 
         std::shared_ptr<FFmpegOutput> output(new FFmpegOutput(
             "rtp://127.0.0.1:5004", ffmpegInput->get_stream_desc()));
@@ -63,10 +63,11 @@ int main(int argc, char *argv[]) {
 
         auto stream = std::async(std::launch::async, [&] {
             while (running.load() && ffmpegInput->stream_status()) {
-                cv::Mat image = ffmpegInput->get_mat();
+                int64_t pts = 0;
+                cv::Mat image = ffmpegInput->get_mat(pts);
                 if (!image.empty()) {
-                    image = opencv_processing->process_image(image);
-                    output->send_image(image);
+                    /* image = opencv_processing->process_image(image); */
+                    output->send_image(image, pts);
                 }
             }
         });
@@ -78,7 +79,7 @@ int main(int argc, char *argv[]) {
             ws.send(buffer, len);
         }
 
-        /* stream.wait(); */
+        stream.wait();
     } catch (const std::exception &e) {
         std::cerr << "Error: " << e.what() << std::endl;
     }
