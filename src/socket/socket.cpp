@@ -33,7 +33,7 @@ std::shared_ptr<char[]> SocketWrapper::recvBuffer(int &len) {
     char *buffer = new char[BUFFER_SIZE];
     int res = recv(sock, buffer, BUFFER_SIZE, 0);
     if (res < 0) {
-        throw std::runtime_error("Error in reading from socket");
+        throw std::runtime_error("Socket is empty");
     }
 
     len = res;

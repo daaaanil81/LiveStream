@@ -1,6 +1,5 @@
 #include "opencv/opencv.hpp"
 #include <atomic>
-#include <fstream>
 
 // Constants
 const float INPUT_WIDTH = 640.0;
@@ -33,39 +32,35 @@ std::size_t LPR::replace_all(std::string &inout, std::string_view what,
     return count;
 }
 
-LPR::LPR(std::string path_to_vocabulary, std::string path_to_rec_model,
-         std::string path_to_dec_model) {
+LPR::LPR(const std::string &path_to_vocabulary,
+         const std::string &path_to_rec_model,
+         const std::string &path_to_dec_model)
+    : vocFile_(path_to_vocabulary),
+      detection_model_(cv::dnn::readNet(path_to_dec_model)),
+      net_recognition_model_(cv::dnn::readNet(path_to_rec_model)),
+      recognition_model_(net_recognition_model_) {
 
-    std::ifstream vocFile;
-    vocFile.open(path_to_vocabulary);
-    if (!vocFile.is_open()) {
+    if (!vocFile_.is_open()) {
         throw std::logic_error("ERROR! Didn't find vocabulary file.\n");
     }
 
-    detection_model_ = cv::dnn::readNet(path_to_dec_model);
     if (detection_model_.empty()) {
         throw std::logic_error("ERROR! Detection model error!\n");
     }
 
-    detection_model_.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
-    detection_model_.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
-    /* detection_model_.setPreferableBackend(cv::dnn::DNN_BACKEND_INFERENCE_ENGINE);
-     */
-    /* detection_model_.setPreferableTarget(cv::dnn::DNN_TARGET_CPU); */
-
-    net_recognition_model_ = cv::dnn::readNet(path_to_rec_model);
     if (net_recognition_model_.empty()) {
         throw std::logic_error("ERROR! Recognition model error!\n");
     }
 
+    detection_model_.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
+    detection_model_.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
+
     net_recognition_model_.setPreferableBackend(cv::dnn::DNN_BACKEND_CUDA);
     net_recognition_model_.setPreferableTarget(cv::dnn::DNN_TARGET_CUDA);
 
-    recognition_model_ = cv::dnn::TextRecognitionModel(net_recognition_model_);
-
     std::string vocLine;
     std::vector<std::string> vocabulary;
-    while (std::getline(vocFile, vocLine)) {
+    while (std::getline(vocFile_, vocLine)) {
         vocabulary.push_back(vocLine);
     }
 

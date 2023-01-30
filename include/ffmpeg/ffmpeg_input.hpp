@@ -28,6 +28,8 @@ class FFmpegInput {
     void stop_stream();
     std::shared_ptr<stream_desc_t> get_stream_desc() const;
     cv::Mat decode_packet(std::shared_ptr<AVPacket> packet, int64_t &pts);
+
+    virtual ~FFmpegInput() = default;
 };
 
 class FFmpegInputFile : public FFmpegInput {

@@ -8,6 +8,7 @@
 
 #include "ffmpeg/ffmpeg_input.hpp"
 #include "ffmpeg/ffmpeg_output.hpp"
+#include "opencv/help.hpp"
 #include "opencv/opencv.hpp"
 #include "socket/socket.h"
 #include "socket/ws_socket.h"
@@ -21,30 +22,35 @@ int main(int argc, char *argv[]) {
 
     avformat_network_init();
 
-    std::string pathStr;
-    std::string type;
-
-    if (argc > 2) {
-        pathStr = argv[1];
-        type = argv[2];
-    } else {
-        std::cout << "Usage: " << argv[0] << " <path_to_file> <type -f/-d>"
-                  << std::endl;
-
-        return -1;
+    cv::CommandLineParser parser(argc, argv, keys);
+    parser.about("Demo webrtc real time streaming with license plate detection "
+                 "and recognition.");
+    if (!parser.check()) {
+        parser.printErrors();
+        return 0;
     }
+
+    if (parser.has("help")) {
+        parser.printMessage();
+        return 0;
+    }
+
+    bool typeDevice = parser.get<bool>("device");
+    bool typeFile = parser.get<bool>("file");
+    std::string sourcePath = parser.get<std::string>("path");
 
     try {
         std::shared_ptr<FFmpegInput> ffmpegInput;
-        if (type == "-f") {
-            ffmpegInput.reset(new FFmpegInputFile(pathStr.c_str()));
-        } else if (type == "-d") {
-            ffmpegInput.reset(new FFmpegInputWebCamera(pathStr.c_str()));
+        if (typeFile) {
+            ffmpegInput.reset(new FFmpegInputFile(sourcePath.c_str()));
+        } else if (typeDevice) {
+            ffmpegInput.reset(new FFmpegInputWebCamera(sourcePath.c_str()));
         } else {
-            std::cout << "Usage: " << argv[0] << " <path_to_file> <type -f/-d>"
-                      << std::endl;
-            return -1;
+            std::cout << "Forgot type for source file" << std::endl;
+            parser.printMessage();
+            return 0;
         }
+
         std::shared_ptr<AiTask> opencv_processing(
             new LPR("voc.txt", "crnn_cs.onnx", "plate_detection.onnx"));
 
