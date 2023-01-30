@@ -59,7 +59,22 @@ cmake -D CMAKE_BUILD_TYPE=RELEASE \
 1. `git clone https://github.com/paullouisageneau/libdatachannel.git`
 2. `cd libdatachannel`
 3. `git submodule update --init --recursive --depth 1`
-4. `mkdir build && cd build && cmake .. && make -12 && sudo make install`
+4. `mkdir build && cd build && cmake .. && make -j12 && sudo make install`
+
+## Customize OpenCV model
+
+### Create model class
+
+You have to create a class for your model in the `open.hpp` file that will publicly inherit from the `AiTask` class. 
+The `AiTask` class contains a purely virtual function `process_image`, that your class must override.
+This function is responsible for processing the image in accordance with the task.
+
+### Update class instance in `main.cpp`
+
+You have to replace the existing class instance in the `main.cpp` file in the following way:
+```
+std::shared_ptr<AiTask> opencv_processing(new `YourModelClass`());
+```
 
 ## Start application
 
