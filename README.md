@@ -65,7 +65,7 @@ cmake -D CMAKE_BUILD_TYPE=RELEASE \
 
 ### Create model class
 
-You have to create a class for your model in the `opencv.hpp` file that will publicly inherit from the `AiTask` class and implement all the functions in the `openc.cpp` file. \
+You have to create a class for your model in the `opencv.hpp` file that will publicly inherit from the `AiTask` class and implement all the functions in the `opencv.cpp` file. \
 The `AiTask` class contains a purely virtual function `process_image`, that your class must override.\
 This function is responsible for processing the image in accordance with the task.
 
