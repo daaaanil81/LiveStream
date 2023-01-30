@@ -48,7 +48,7 @@ bool FFmpegOutput::open_video_stream(std::string url,
     cctx_->max_b_frames = desc->max_b_frames;
     cctx_->pix_fmt = AV_PIX_FMT_YUV420P;
     cctx_->codec_type = AVMEDIA_TYPE_VIDEO;
-    /* cctx_->framerate = desc->framerate; */
+    cctx_->framerate = desc->framerate;
     /* cctx_->bit_rate = desc->bit_rate / 2; */
     /* cctx_->width = desc->width; */
     /* cctx_->height = desc->height; */
@@ -71,7 +71,7 @@ bool FFmpegOutput::open_video_stream(std::string url,
 
     stream = avformat_new_stream(context, codec);
 
-    /* stream->r_frame_rate = desc->r_frame_rate; */
+    stream->r_frame_rate = desc->r_frame_rate;
     stream->avg_frame_rate = desc->avg_frame_rate;
     stream->time_base = cctx_->time_base;
 

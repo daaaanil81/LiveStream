@@ -20,8 +20,13 @@ SocketWrapper::SocketWrapper(const std::string &ip, int port) {
         throw std::runtime_error("Failed to bind UDP socket on 127.0.0.1:6000");
     }
 
+    tv.tv_sec = timeout_seconds;
+    tv.tv_usec = 0;
+
     setsockopt(sock, SOL_SOCKET, SO_RCVBUF,
                reinterpret_cast<const char *>(&rcvBufSize), sizeof(rcvBufSize));
+    setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO,
+               reinterpret_cast<const char *>(&tv), sizeof(tv));
 }
 
 std::shared_ptr<char[]> SocketWrapper::recvBuffer(int &len) {

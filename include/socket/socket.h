@@ -16,7 +16,9 @@ class SocketWrapper {
   private:
     const int rcvBufSize = 212992;
     const int BUFFER_SIZE = 2048;
+    struct timeval tv;
     int sock;
+    const long timeout_seconds = 5;
 
   public:
     SocketWrapper(const std::string &ip, int port);

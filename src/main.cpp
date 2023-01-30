@@ -66,7 +66,7 @@ int main(int argc, char *argv[]) {
                 int64_t pts = 0;
                 cv::Mat image = ffmpegInput->get_mat(pts);
                 if (!image.empty()) {
-                    /* image = opencv_processing->process_image(image); */
+                    image = opencv_processing->process_image(image);
                     output->send_image(image, pts);
                 }
             }
