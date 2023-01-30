@@ -7,12 +7,15 @@
 curl -fsSL https://deb.nodesource.com/setup_19.x | sudo -E bash - &&\
 sudo apt-get install -y nodejs
 ```
+---
 
 ### Install Cuda
 
 [Cuda download](https://developer.nvidia.com/cuda-downloads)
 [Cudnn install guide](https://docs.nvidia.com/deeplearning/cudnn/install-guide/index.html)
 [Cuda installation guide](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html)
+
+---
 
 ### Build and Install OpenCV
 ```
@@ -50,17 +53,21 @@ cmake -D CMAKE_BUILD_TYPE=RELEASE \
 ```
 8. `make -j12 && sudo make install && sudo ldconfig`
 
+---
+
 ### Build and Install Ffmpeg
 
 [Ffmpeg Instruction](https://trac.ffmpeg.org/wiki/CompilationGuide/Ubuntu)
 
+---
+
 ### Build and Install libdatachannel
-
-1. `git clone https://github.com/paullouisageneau/libdatachannel.git`
-2. `cd libdatachannel`
-3. `git submodule update --init --recursive --depth 1`
-4. `mkdir build && cd build && cmake .. && make -j12 && sudo make install`
-
+```
+git clone https://github.com/paullouisageneau/libdatachannel.git
+cd libdatachannel
+git submodule update --init --recursive --depth 1
+mkdir build && cd build && cmake .. && make -j12 && sudo make install
+```
 ## Customize OpenCV model
 
 ### Create model class
@@ -78,15 +85,39 @@ std::shared_ptr<AiTask> opencv_processing(new YourModelClass(...));
 
 ## Start application
 
+Project has several binary files. Startup sequence hasn't matter. 
+For stopping process, using Ctrl+C.
+
 ### Client part:
 ```
-cd http_server && \
-npm install . && \
+cd http_server
+npm install .
 node server.js localhost
 ```
 
+---
+
 ### Daemon part:
+
+`mkdir build && cd build && cmake .. && make`
+
+#### Help
 ```
-mkdir build && cd build && cmake .. && make && \
-./daemon
+./daemon -h
+Usage: daemon [params]
+	-d, --device (value:0)
+		Type of path: device
+	-f, --file (value:0)
+		Type of path: file
+	-h, --help (value:true)
+		print this message
+	-p, --path
+		path to device or file -p=<path>
 ```
+
+Example for file:
+`./daemon -p=Pexels_Videos_2103099.mp4 -f`
+or device:
+`./daemon -p=/dev/video0 -d`
+
+
