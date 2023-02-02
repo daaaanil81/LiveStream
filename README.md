@@ -11,9 +11,9 @@ sudo apt-get install -y nodejs
 
 ### Install Cuda
 
-[Cuda download](https://developer.nvidia.com/cuda-downloads)
-[Cudnn install guide](https://docs.nvidia.com/deeplearning/cudnn/install-guide/index.html)
-[Cuda installation guide](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html)
+1. [Cuda download](https://developer.nvidia.com/cuda-downloads)
+2. [Cudnn install guide](https://docs.nvidia.com/deeplearning/cudnn/install-guide/index.html)
+3. [Cuda installation guide](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/index.html)
 
 ---
 
@@ -72,13 +72,13 @@ mkdir build && cd build && cmake .. && make -j12 && sudo make install
 
 ### Create model class
 
-You have to create a class for your model in the `opencv.hpp` file that will publicly inherit from the `AiTask` class and implement all the functions in the `opencv.cpp` file. \
-The `AiTask` class contains a purely virtual function `process_image`, that your class must override.\
+You have to create a class for your model in the ```opencv.hpp``` file that will publicly inherit from the ```AiTask``` class and implement all the functions in the ```opencv.cpp``` file. \
+The `AiTask` class contains a purely virtual function ```process_image```, that your class must override.\
 This function is responsible for processing the image in accordance with the task.
 
-### Update class instance in `main.cpp`
+### Update class instance in ```main.cpp```
 
-You have to replace the existing class instance in the `main.cpp` file in the following way:
+You have to replace the existing class instance in the ```main.cpp``` file in the following way:
 ```
 std::shared_ptr<AiTask> opencv_processing(new YourModelClass(...));
 ```
@@ -99,7 +99,9 @@ node server.js localhost
 
 ### Daemon part:
 
-`mkdir build && cd build && cmake .. && make`
+```
+mkdir build && cd build && cmake .. && make
+```
 
 #### Help
 ```
@@ -116,8 +118,12 @@ Usage: daemon [params]
 ```
 
 Example for file:
-`./daemon -p=Pexels_Videos_2103099.mp4 -f`
+```
+./daemon -p=Pexels_Videos_2103099.mp4 -f
+```
 or device:
-`./daemon -p=/dev/video0 -d`
+```
+./daemon -p=/dev/video0 -d
+```
 
 

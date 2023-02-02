@@ -19,10 +19,8 @@ cv::Scalar BLUE = cv::Scalar(255, 178, 50);
 // Class list
 std::vector<std::string> class_list = {"licence"};
 
-std::atomic_bool exiting{false};
-
-std::size_t LPR::replace_all(std::string &inout, std::string_view what,
-                             std::string_view with) {
+size_t LPR::replace_all(std::string &inout, const std::string_view &what,
+                        const std::string_view &with) {
     std::size_t count{};
     for (std::string::size_type pos{};
          inout.npos != (pos = inout.find(what.data(), pos, what.length()));
@@ -33,10 +31,10 @@ std::size_t LPR::replace_all(std::string &inout, std::string_view what,
 }
 
 LPR::LPR(const std::string &path_to_vocabulary,
-         const std::string &path_to_rec_model,
-         const std::string &path_to_dec_model)
+         const std::string &path_to_det_model,
+         const std::string &path_to_rec_model)
     : vocFile_(path_to_vocabulary),
-      detection_model_(cv::dnn::readNet(path_to_dec_model)),
+      detection_model_(cv::dnn::readNet(path_to_det_model)),
       net_recognition_model_(cv::dnn::readNet(path_to_rec_model)),
       recognition_model_(net_recognition_model_) {
 
@@ -72,9 +70,9 @@ LPR::LPR(const std::string &path_to_vocabulary,
     cv::Scalar recMean = cv::Scalar(127.5, 127.5, 127.5);
     cv::Size recInputSize = cv::Size(100, 32);
     recognition_model_.setInputParams(recScale, recInputSize, recMean);
-};
+}
 
-cv::Mat LPR::process_image(cv::Mat &input_image) {
+void LPR::process_image(cv::Mat &input_image) {
 
     // Convert to blob.
     cv::Mat blob;
@@ -182,6 +180,4 @@ cv::Mat LPR::process_image(cv::Mat &input_image) {
                     cv::FONT_HERSHEY_SIMPLEX, 0.7, cv::Scalar(0, 0, 255), 2);
         }
     }
-
-    return input_image;
-};
+}

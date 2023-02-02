@@ -1,18 +1,35 @@
 #include "ffmpeg/ffmpeg_input.hpp"
 #include <exception>
 
-cv::Mat FFmpegInput::decode_packet(std::shared_ptr<AVPacket> pPacket,
+cv::Mat FFmpegInput::frame2mat(const std::shared_ptr<AVFrame> &pFrame) {
+    int cvLinesizes[1] = {0};
+    AVPixelFormat dst_pix_fmt = AV_PIX_FMT_BGR24;
+    std::unique_ptr<SwsContext, SwsContext_Deleter> sws_ctx(
+        nullptr, SwsContext_Deleter());
+
+    AVPixelFormat src_pix_fmt = AVPixelFormat(pFrame->format);
+
+    sws_ctx.reset(sws_getContext(pFrame->width, pFrame->height, src_pix_fmt,
+                                 pFrame->width, pFrame->height, dst_pix_fmt,
+                                 SWS_BICUBIC, nullptr, nullptr, nullptr));
+    cv::Mat image = cv::Mat(pFrame->height, pFrame->width, CV_8UC3);
+
+    cvLinesizes[0] = image.step1();
+
+    sws_scale(sws_ctx.get(), pFrame->data, pFrame->linesize, 0, pFrame->height,
+              &image.data, cvLinesizes);
+
+    return image;
+}
+
+cv::Mat FFmpegInput::decode_packet(const std::shared_ptr<AVPacket> &pPacket,
                                    int64_t &pts) {
 
     if (!pPacket) {
         return cv::Mat{};
     }
 
-    int cvLinesizes[1] = {0};
-    AVPixelFormat dst_pix_fmt = AV_PIX_FMT_BGR24;
     std::shared_ptr<AVFrame> pFrame{av_frame_alloc(), AVFrame_Deleter()};
-    std::unique_ptr<SwsContext, SwsContext_Deleter> sws_ctx(
-        nullptr, SwsContext_Deleter());
 
     /* Supply raw packet data as input to a decoder. */
     int res = avcodec_send_packet(spCodecContext_.get(), pPacket.get());
@@ -36,19 +53,9 @@ cv::Mat FFmpegInput::decode_packet(std::shared_ptr<AVPacket> pPacket,
               << " key_frame " << pFrame->key_frame << " [DTS "
               << pFrame->coded_picture_number << "]" << std::endl;
 
+    cv::Mat image = frame2mat(pFrame);
+
     pts = pFrame->pts;
-
-    AVPixelFormat src_pix_fmt = AVPixelFormat(pFrame->format);
-
-    sws_ctx.reset(sws_getContext(pFrame->width, pFrame->height, src_pix_fmt,
-                                 pFrame->width, pFrame->height, dst_pix_fmt,
-                                 SWS_BICUBIC, nullptr, nullptr, nullptr));
-    cv::Mat image = cv::Mat(pFrame->height, pFrame->width, CV_8UC3);
-
-    cvLinesizes[0] = image.step1();
-
-    sws_scale(sws_ctx.get(), pFrame->data, pFrame->linesize, 0, pFrame->height,
-              &image.data, cvLinesizes);
 
     return image;
 };
@@ -84,11 +91,8 @@ void FFmpegInput::read_video_stream() {
         int res = av_read_frame(spAVFormatContext_.get(), spPacket.get());
         if (res >= 0) {
             if (spPacket->stream_index == video_stream_index_) {
-                // std::cout << pPacket->pos << std::endl;
                 std::lock_guard<std::mutex> lock(mutex_);
                 packet_list_.push_back(spPacket);
-                /* std::cout << "Pushing packet, list size: " */
-                /* << packet_list_.size() << std::endl; */
             }
         } else {
             active_ = false;
@@ -186,6 +190,7 @@ FFmpegInputFile::FFmpegInputFile(const char *path_to_file) {
             "Failed to initialize context to use the given codec");
     }
 
+    // TODO: Sometimes can be problem with side data in stream. Commet the line.
     av_dump_format(spAVFormatContext_.get(), 0, path_to_file, 0);
 
     active_ = true;
@@ -298,10 +303,8 @@ std::shared_ptr<AVPacket> FFmpegInput::get() {
     std::shared_ptr<AVPacket> result_packet = nullptr;
     std::lock_guard<std::mutex> lock(mutex_);
     if (packet_list_.size() != 0) {
-        /* std::cout << "Before receiving packet: " << packet_list_.size(); */
         result_packet = packet_list_.front();
         packet_list_.pop_front();
-        /* std::cout << " After: " << packet_list_.size() << std::endl; */
     }
 
     return result_packet;
@@ -313,10 +316,8 @@ cv::Mat FFmpegInput::get_mat(int64_t &pts) {
     std::shared_ptr<AVPacket> result_packet{nullptr, AVPacket_Deleter()};
     std::lock_guard<std::mutex> lock(mutex_);
     if (packet_list_.size() != 0) {
-        /* std::cout << "Before receiving packet: " << packet_list_.size(); */
         result_packet = packet_list_.front();
         packet_list_.pop_front();
-        /* std::cout << " After: " << packet_list_.size() << std::endl; */
         packet_image = decode_packet(result_packet, pts);
     }
 

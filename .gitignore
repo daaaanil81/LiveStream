@@ -4,6 +4,10 @@ build/
 build/*
 .syntastic_cpp_config
 
+# Doxygen
+html/
+latex/
+
 # Logs
 logs
 *.log

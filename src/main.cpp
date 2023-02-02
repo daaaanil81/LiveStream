@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
         }
 
         std::shared_ptr<AiTask> opencv_processing(
-            new LPR("voc.txt", "crnn_cs.onnx", "plate_detection.onnx"));
+            new LPR("voc.txt", "plate_detection.onnx", "crnn_cs.onnx"));
 
         std::shared_ptr<FFmpegOutput> output(new FFmpegOutput(
             "rtp://127.0.0.1:5004", ffmpegInput->get_stream_desc()));
@@ -72,7 +72,7 @@ int main(int argc, char *argv[]) {
                 int64_t pts = 0;
                 cv::Mat image = ffmpegInput->get_mat(pts);
                 if (!image.empty()) {
-                    image = opencv_processing->process_image(image);
+                    opencv_processing->process_image(image);
                     output->send_image(image, pts);
                 }
             }

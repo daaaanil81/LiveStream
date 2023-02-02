@@ -5,26 +5,67 @@
 #include <memory>
 #include <string>
 
+/**
+ * Class for output stream to rtp port.
+ */
 class FFmpegOutput {
-  public:
-    FFmpegOutput(std::string video_url,
-                 std::shared_ptr<stream_desc_t> video_desc);
-    // ~FFmpegOutput();
-
-    bool send_image(cv::Mat &image, int64_t pts);
-
   private:
-    static uint64_t pts_frame_;
-    std::string m_video_url_;
-    AVOutputFormat *m_format_;
+    //! RTP output video url.
+    std::string video_url_;
+    //! RTP output format.
+    AVOutputFormat *format_;
+    //! Format context for output streaming.
     std::shared_ptr<AVFormatContext> spAVFormatContext_;
-    AVStream *m_video_stream_;
+    //! Pointer on RTP video stream.
+    AVStream *video_stream_;
+    //! Codec context for settings stream parameters.
     std::shared_ptr<AVCodecContext> cctx_;
 
-    std::shared_ptr<AVFrame> mat2frame(cv::Mat &image, int64_t pts);
-    bool open_video_stream(std::string url, std::shared_ptr<stream_desc_t> desc,
-                           AVFormatContext *&context, AVStream *&stream);
-    void generate_sdp(AVFormatContext *pFormatCtx);
+    //! Convert cv::Mat to AVFrame.
+    /*!
+     * \param image Image in BGR24 pixel format.
+     * \return AVFrame in YUV420P pixel format.
+     */
+    std::shared_ptr<AVFrame> mat2frame(cv::Mat &image);
+
+    //! Open video stream.
+    /*!
+     * Open video stream with parameters from FFmpegInput.
+     * Fill AVFormatContext for output stream.
+     * \param desc Structure with FFmpegInput stream parameters.
+     * \param context Pointer on format context which will be filled.
+     * \return AVFrame in YUV420P pixel format.
+     */
+    bool open_video_stream(const std::shared_ptr<stream_desc_t> &desc,
+                           AVFormatContext *&context);
+
+    //! Generate SDP of output stream.
+    /*!
+     * By using filled AVFormatContext, generates SDP file for debugging.
+     * \param context Filled AVFormatContext.
+     */
+    void generate_sdp(AVFormatContext *context);
+
+  public:
+    //! Constructor for streaming to RTP url.
+    /*!
+     * \param video_url RTP url with ip and port.
+     * \param video_desc Video parameters from FFmpegInput.
+     */
+    FFmpegOutput(const std::string &video_url,
+                 const std::shared_ptr<stream_desc_t> &video_desc);
+
+    //! Send image to RTP port.
+    /*!
+     * Receive cv::Mat.
+     * Convert cv::Mat to AVFrame.
+     * AVPacket collects with AVFrame.
+     * AVPacket to RTP port.
+     * \param image Image in BGR24 pixel format.
+     * \param pts Set origin PTS from AVFrame before convertation.
+     * \return True is successful, false is error.
+     */
+    bool send_image(cv::Mat &image, int64_t pts);
 };
 
 #endif
