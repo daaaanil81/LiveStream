@@ -91,17 +91,19 @@ For stopping process, using Ctrl+C.
 ### Client part:
 ```
 cd http_server
-npm install .
-node server.js localhost
+npm install .            # Install Dependencies
+node server.js localhost # Start https server 
 ```
 
 ---
 
 ### Daemon part:
-
 ```
 mkdir build && cd build && cmake .. && make
+./daemon ...
 ```
+Last step:
+Open https://localhost:10000/ 
 
 #### Help
 ```
@@ -126,4 +128,16 @@ or device:
 ./daemon -p=/dev/video0 -d
 ```
 
+## Documantation
+
+1. Install Dependencies
+```
+sudo apt update
+sudo apt-get install doxygen doxygen-doc doxygen-gui graphviz
+```
+2. Generate Documantation
+```
+doxygen Doxyfile
+cd html && google-chrome index.html
+```
 
