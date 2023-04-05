@@ -78,5 +78,6 @@ target_link_libraries(daemon
     -lswscale
     -lavdevice
     -ldatachannel
+    -lz
     ${OpenCV_LIBS}
     )

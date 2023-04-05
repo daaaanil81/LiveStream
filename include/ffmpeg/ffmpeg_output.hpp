@@ -13,7 +13,7 @@ class FFmpegOutput {
     //! RTP output video url.
     std::string video_url_;
     //! RTP output format.
-    AVOutputFormat *format_;
+    const AVOutputFormat *format_;
     //! Format context for output streaming.
     std::shared_ptr<AVFormatContext> spAVFormatContext_;
     //! Pointer on RTP video stream.

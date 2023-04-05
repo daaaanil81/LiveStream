@@ -20,7 +20,7 @@ bool FFmpegOutput::open_video_stream(const std::shared_ptr<stream_desc_t> &desc,
         return false;
     }
 
-    AVCodec *codec = avcodec_find_encoder_by_name("libx264");
+    const AVCodec *codec = avcodec_find_encoder_by_name("libx264");
     if (!codec) {
         std::cerr << "error: avcodec_find_encoder_by_name; line: " << __LINE__
                   << std::endl;
