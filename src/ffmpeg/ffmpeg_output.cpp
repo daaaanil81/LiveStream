@@ -20,12 +20,17 @@ bool FFmpegOutput::open_video_stream(const std::shared_ptr<stream_desc_t> &desc,
         return false;
     }
 
-    const AVCodec *codec = avcodec_find_encoder_by_name("libx264");
+    const AVCodec *codec = avcodec_find_encoder(AV_CODEC_ID_H264);
     if (!codec) {
         std::cerr << "error: avcodec_find_encoder_by_name; line: " << __LINE__
                   << std::endl;
         return false;
     }
+
+    video_stream_ = avformat_new_stream(context, nullptr);
+
+    video_stream_->id = (int)(context->nb_streams - 1);
+
 
     cctx_ = std::shared_ptr<AVCodecContext>{avcodec_alloc_context3(codec),
                                             AVCodecContext_Deleter()};
@@ -34,11 +39,22 @@ bool FFmpegOutput::open_video_stream(const std::shared_ptr<stream_desc_t> &desc,
         return false;
     }
 
+    int bitrate = 1000000;
+    if (height > 1000)
+        bitrate = 3000000;
+    else if (height > 700)
+        bitrate = 1500000;
+
+    cctx_->codec_id = context->oformat->video_codec;
+	cctx_->bit_rate = bitrate;
+	video_stream_->time_base = av_d2q(1.0 / 30, 120);
+
+	cctx_->time_base = video_stream_->time_base;
+	cctx_->gop_size = 12;
+	cctx_->max_b_frames = 2;
+
     cctx_->width = desc->width;
     cctx_->height = desc->height;
-    cctx_->gop_size = desc->gop_size;
-    cctx_->time_base = desc->time_base;
-    cctx_->max_b_frames = desc->max_b_frames;
     cctx_->pix_fmt = AV_PIX_FMT_YUV420P;
     cctx_->codec_type = AVMEDIA_TYPE_VIDEO;
     if (context->oformat->flags & AVFMT_GLOBALHEADER) {
@@ -49,11 +65,6 @@ bool FFmpegOutput::open_video_stream(const std::shared_ptr<stream_desc_t> &desc,
         av_opt_set(cctx_->priv_data, "preset", "ultrafast", 0);
         av_opt_set(cctx_->priv_data, "tune", "zerolatency", 0);
     }
-
-    video_stream_ = avformat_new_stream(context, codec);
-    video_stream_->r_frame_rate = desc->r_frame_rate;
-    video_stream_->avg_frame_rate = desc->avg_frame_rate;
-    video_stream_->time_base = cctx_->time_base;
 
     int res = avcodec_open2(cctx_.get(), codec, NULL);
     if (res < 0) {
@@ -153,10 +164,9 @@ bool FFmpegOutput::send_image(cv::Mat &image, int64_t pts) {
 
     int ret, got_output;
 
-    std::shared_ptr<AVPacket> pkt{av_packet_alloc(), AVPacket_Deleter()};
     std::shared_ptr<AVFrame> frame = mat2frame(image);
 
-    frame->pts = pts;
+    frame->pts = pts++;
 
     ret = avcodec_send_frame(cctx_.get(), frame.get());
     if (ret == AVERROR_EOF) {
@@ -165,7 +175,9 @@ bool FFmpegOutput::send_image(cv::Mat &image, int64_t pts) {
         got_output = false;
     }
 
+    std::shared_ptr<AVPacket> pkt{av_packet_alloc(), AVPacket_Deleter()};
     ret = avcodec_receive_packet(cctx_.get(), pkt.get());
+
     if (ret == AVERROR_EOF) {
         got_output = false;
     } else if (ret == AVERROR(EAGAIN)) {
@@ -173,6 +185,9 @@ bool FFmpegOutput::send_image(cv::Mat &image, int64_t pts) {
     } else {
         got_output = true;
     }
+
+    av_packet_rescale_ts(pkt.get(), cctx_->time_base, video_stream_->time_base);
+	pkt->stream_index = video_stream_->index;
 
     if (got_output) {
         std::ostringstream os("frame");

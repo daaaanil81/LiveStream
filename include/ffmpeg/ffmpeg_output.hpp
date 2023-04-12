@@ -66,6 +66,8 @@ class FFmpegOutput {
      * \return True is successful, false is error.
      */
     bool send_image(cv::Mat &image, int64_t pts);
+
+    uint64_t pts = 0;
 };
 
 #endif
