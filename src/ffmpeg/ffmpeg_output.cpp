@@ -40,9 +40,9 @@ bool FFmpegOutput::open_video_stream(const std::shared_ptr<stream_desc_t> &desc,
     }
 
     int bitrate = 1000000;
-    if (height > 1000)
+    if (desc->height > 1000)
         bitrate = 3000000;
-    else if (height > 700)
+    else if (desc->height > 700)
         bitrate = 1500000;
 
     cctx_->codec_id = context->oformat->video_codec;
